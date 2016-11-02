@@ -20,6 +20,7 @@ Computer vision and rendering of faces for a crowdsourced durational performance
   - need to add hysteresis to the description of the face, so it doesn't flicker
   - manual "reload" button?
   - should be able to change the effective cpu usage by modifying the runner function
+  - switch the utils that don't need to be public to private
 
 ## todo
 

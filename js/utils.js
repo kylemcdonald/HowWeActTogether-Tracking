@@ -1,11 +1,13 @@
-var utils = {
+var utils = function(p) {
 
-	config: {
+	var module = {};
+
+	var config = {
 		mouthOpennessThreshold: 0.1,
 		irisSize: 0.121
-	},
+	};
 
-	createTracker: function(capture) {
+	module.createTracker = function(capture) {
 		var tracker = new clm.tracker({
 			searchWindow: 11,
 			scoreThreshold: 0.30,
@@ -17,57 +19,57 @@ var utils = {
 		// document.addEventListener('clmtrackrNotFound', clmtrackrNotFound);
 		// document.addEventListener('clmtrackrConverged', clmtrackrConverged);
 		return tracker;
-	},
+	};
 
-	formatRecording: function (recording) {
+	module.formatRecording = function (recording) {
 		var precision = 4;
 		return '[' + recording.map(function (frame) {
 			return '[' + frame.map(function (param) {
 				return param.toPrecision(precision);
 			}).join(',') + ']';
 		}).join(',') + ']';
-	},
+	};
 
-	resetTracker: function (tracker, capture) {
+	module.resetTracker = function (tracker, capture) {
 		tracker.stop();
 		tracker.reset();
 		tracker.start(capture.elt);
-	},
+	};
 
-	drawParameters: function (params) {
-		push();
-		strokeWeight(1);
-		translate(width / 2, 10);
+	module.drawParameters = function (params) {
+		p.push();
+		p.strokeWeight(1);
+		p.translate(p.width / 2, 10);
 		params.forEach(function(p) {
-			rect(0, 0, p, 10);
-			translate(0, 12);
+			p.rect(0, 0, p, 10);
+			p.translate(0, 12);
 		})
-		pop();
-	},
+		p.pop();
+	};
 
-	getVertex: function (vertices, i) {
-		return Array.isArray(i) ? utils.average(vertices, i) : vertices[i];
-	},
+	module.getVertex = function (vertices, i) {
+		return Array.isArray(i) ? module.average(vertices, i) : vertices[i];
+	};
 
-	drawCurve: function (vertices, indices) {
-		beginShape();
+	module.drawCurve = function (vertices, indices) {
+		p.beginShape();
 		indices.forEach(function(i) {
-			var cur = utils.getVertex(vertices, i);
-			curveVertex(cur[0], cur[1]);
+			var cur = module.getVertex(vertices, i);
+			p.curveVertex(cur[0], cur[1]);
 		});
-		endShape();
-	},
+		p.endShape();
+	};
 
-	drawPolyline: function (vertices, indices) {
-		beginShape();
+	module.drawPolyline = function (vertices, indices) {
+		p.beginShape();
 		indices.forEach(function(i) {
-			var cur = utils.getVertex(vertices, i);
-			vertex(cur[0], cur[1]);
+			var cur = module.getVertex(vertices, i);
+			p.vertex(cur[0], cur[1]);
 		});
-		endShape();
-	},
+		p.endShape();
+	};
 
-	average: function (vertices, indices) {
+	module.average = function (vertices, indices) {
 		var center = [0., 0.];
 		var n;
 		if(Array.isArray(indices)) {
@@ -86,23 +88,23 @@ var utils = {
 		center[0] /= n;
 		center[1] /= n;
 		return center;
-	},
+	};
 
-	vectorLength: function(v) {
+	module.vectorLength = function(v) {
 		return Math.sqrt(v[0] * v[0] + v[1] * v[1]);
-	},
+	};
 
-	subtract: function (a, b) {
+	module.subtract = function (a, b) {
 		var dx = b[0] - a[0];
 		var dy = b[1] - a[1];
 		return [dx, dy];
-	},
+	};
 
-	distance: function (a, b) {
-		return utils.vectorLength(utils.subtract(a, b));
-	},
+	module.distance = function (a, b) {
+		return module.vectorLength(module.subtract(a, b));
+	};
 
-	subtractList: function (a, b) {
+	module.subtractList = function (a, b) {
 		var dx = 0;
 		var dy = 0;
 		for(var i = 0; i < a.length; i++) {
@@ -110,30 +112,30 @@ var utils = {
 			dy += b[i][1] - a[i][1];
 		}
 		return [dx, dy];
-	},
+	};
 
-	distanceList: function (a, b) {
-		return utils.vectorLength(utils.subtractList(a, b));   
-	},
+	module.distanceList = function (a, b) {
+		return module.vectorLength(module.subtractList(a, b));   
+	};
 
-	estimateCenter: function (positions) {
-		return utils.average([positions[23], positions[28], positions[37]]);
-	},
+	module.estimateCenter = function (positions) {
+		return module.average([positions[23], positions[28], positions[37]]);
+	};
 
 	// vulnerable to turning the head left/right
-	estimateScale: function (positions) {
-		return utils.distance(positions[23], positions[28]);
-	},
+	module.estimateScale = function (positions) {
+		return module.distance(positions[23], positions[28]);
+	};
 
-	buildDescription: function (positions) {
+	module.buildDescription = function (positions) {
 		var description = {};
 
-		var faceCenter = utils.estimateCenter(positions);
-		var faceScale = utils.estimateScale(positions);
+		var faceCenter = module.estimateCenter(positions);
+		var faceScale = module.estimateScale(positions);
 
-		var mouthCenter = utils.average([positions[60], positions[57]]);
-		var mouthLR = utils.distance(positions[44], positions[50]);
-		var mouthUD = utils.distance(positions[60], positions[57]);
+		var mouthCenter = module.average([positions[60], positions[57]]);
+		var mouthLR = module.distance(positions[44], positions[50]);
+		var mouthUD = module.distance(positions[60], positions[57]);
 		var mouthOpenness = mouthUD / mouthLR;
 
 		// var scale = params[0];
@@ -144,12 +146,12 @@ var utils = {
 		// var xrotation = params[5];
 
 		description.faceScale = faceScale;
-		description.mouthOpen = mouthOpenness > utils.config.mouthOpennessThreshold;
+		description.mouthOpen = mouthOpenness > config.mouthOpennessThreshold;
 
 		return description;
-	},
+	};
 
-	drawClippingPath: function(ctx, positions, indices) {
+	module.drawClippingPath = function (ctx, positions, indices) {
 		ctx.beginPath();
 		ctx.moveTo(positions[indices[0]][0], positions[indices[0]][1]);
 		for(var i = 1; i < indices.length; i++) {
@@ -158,43 +160,45 @@ var utils = {
 		}
 		ctx.closePath();
 		ctx.clip();
-	},
+	};
 
-	drawFace: function(positions, description) {
-		push();
-		noFill();
-		stroke(255);
-		strokeWeight(2);
+	module.drawFace = function(positions, description) {
+		p.push();
+		p.noFill();
+		p.stroke(255);
+		p.strokeWeight(2);
 
 		// draws a curve with the list of indices
 		// a list within the list means "use the average these indices"
-		utils.drawCurve(positions, [34,35,36,[42,36,37],37,[43,37,38],38,39,40]); // nose
-		utils.drawCurve(positions, [2,3,4,5,6,7,8,9,10,11,12]); // jaw
-		utils.drawCurve(positions, [19,19,20,21,22,22]); // left eyebrow
-		utils.drawCurve(positions, [15,15,16,17,18,18]); // right eyebrow
-		utils.drawCurve(positions, [44,[44,45],45,46,47,48,49,[49,50],50]); // upper upper lip
-		utils.drawCurve(positions, [44,[44,61],61,60,59,[59,50],50]); // lower upper lip
+		module.drawCurve(positions, [34,35,36,[42,36,37],37,[43,37,38],38,39,40]); // nose
+		module.drawCurve(positions, [2,3,4,5,6,7,8,9,10,11,12]); // jaw
+		module.drawCurve(positions, [19,19,20,21,22,22]); // left eyebrow
+		module.drawCurve(positions, [15,15,16,17,18,18]); // right eyebrow
+		module.drawCurve(positions, [44,[44,45],45,46,47,48,49,[49,50],50]); // upper upper lip
+		module.drawCurve(positions, [44,[44,61],61,60,59,[59,50],50]); // lower upper lip
 		if(description.mouthOpen) {
-			utils.drawCurve(positions, [44,[44,56],56,57,58,[58,50],50]); // upper lower lip
+			module.drawCurve(positions, [44,[44,56],56,57,58,[58,50],50]); // upper lower lip
 		}
-		utils.drawCurve(positions, [44,55,54,53,52,51,50]); // lower lower lip
+		module.drawCurve(positions, [44,55,54,53,52,51,50]); // lower lower lip
 
 		// draw left and right iris
-		var s = description.faceScale * utils.config.irisSize;
-		var ctx = canvas.elt.getContext("2d");
+		var s = description.faceScale * config.irisSize;
+		var ctx = p.canvas.getContext("2d");
 
 		ctx.save();
-		utils.drawCurve(positions, [23,23,63,24,64,25,65,26,66,23]); // left eye
-		utils.drawClippingPath(ctx, positions, [23,63,24,64,25,65,26,66]); // left eye clipping
-		ellipse(positions[27][0], positions[27][1], s, s); // left iris
+		module.drawCurve(positions, [23,23,63,24,64,25,65,26,66,23]); // left eye
+		module.drawClippingPath(ctx, positions, [23,63,24,64,25,65,26,66]); // left eye clipping
+		p.ellipse(positions[27][0], positions[27][1], s, s); // left iris
 		ctx.restore();
 
 		ctx.save();
-		utils.drawCurve(positions, [28,28,67,29,68,30,69,31,70,28]); // right eye
-		utils.drawClippingPath(ctx, positions, [28,67,29,68,30,69,31,70]); // right eye clipping
-		ellipse(positions[32][0], positions[32][1], s, s); // right iris
+		module.drawCurve(positions, [28,28,67,29,68,30,69,31,70,28]); // right eye
+		module.drawClippingPath(ctx, positions, [28,67,29,68,30,69,31,70]); // right eye clipping
+		p.ellipse(positions[32][0], positions[32][1], s, s); // right iris
 		ctx.restore();
 
-		pop();
-	}
+		p.pop();
+	};
+
+	return module;
 };
