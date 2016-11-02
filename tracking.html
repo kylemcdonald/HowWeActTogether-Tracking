@@ -1,0 +1,119 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<title>How We Act Together Tracking</title>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.4/p5.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.4/addons/p5.dom.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.16.5/lodash.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/clmtrackr/1.0.0/clmtrackr.js"></script>
+
+<!-- 
+<script src="libs/p5.min.js"></script>
+<script src="libs/p5.dom.min.js"></script>
+<script src="libs/lodash.min.js"></script>
+<script src="libs/clmtrackr/clmtrackr.js"></script>
+ -->
+
+<script src="libs/model_pca_20_svm.js"></script>
+<style>*{font-family: sans-serif;}</style>
+</head>
+<body style="background:gray">
+<div id="interactive"></div>
+<script src="js/utils.js"></script>
+<script>
+var interactiveSketch = function (targetGesture) {
+	return function(p) {
+		var u = new utils(p);
+
+		var capture;
+		var tracker;
+
+		var w = 640, h = 480;
+		var drawCamera = true;
+
+		var prevPositions = [];
+		var zeros = [];
+
+		// function clmtrackrIteration() {
+		//   // console.log('clmtrackrIteration');
+		// }
+		// function clmtrackrLost() {
+		//   console.log('clmtrackrLost');
+		// }
+		// function clmtrackrNotFound() {
+		//   console.log('clmtrackrNotFound');
+		// }
+		// function clmtrackrConverged() {
+		//   console.log('clmtrackrConverged');
+		// }
+
+		p.keyPressed = function (key) {
+			if(key.key == '[') {
+				var e = new Event('gestureBegin');
+				document.dispatchEvent(e);
+			}
+			if(key.key == ']') {
+				var e = new Event('gestureEnd');
+				document.dispatchEvent(e);
+			}
+			if(key.key == 'z') {
+				u.resetTracker(tracker, capture);
+			}
+			if(key.key == 'x') {
+				tracker.stop();
+			}
+			if(key.key == 'c') {
+				drawCamera = !drawCamera;
+			}
+		}
+
+		p.setup = function () {
+			p.createCanvas(w, h);
+			capture = p.createCapture(p.VIDEO);
+			capture.size(w, h);
+			capture.hide();
+			tracker = createTracker(capture);
+		}
+
+		p.draw = function () {
+			if(drawCamera) {
+				p.image(capture, 0, 0, w, h);
+			} else {
+				p.background(0);
+			}
+			var positions = tracker.getCurrentPosition();
+			var params = tracker.getCurrentParameters();
+
+			if(positions.length > 0) {
+				u.drawFace(positions, u.buildDescription(positions));
+				// u.drawParameters(params);
+
+				if(zeros.length) {
+					var modifiedParameters = params.slice();
+					zeros.forEach(function (i) {
+						modifiedParameters[i] = 0;
+					})
+					var modifiedPositions = tracker.calculatePositions(modifiedParameters);
+					u.drawFace(modifiedPositions, u.buildDescription(modifiedPositions));    
+				}
+
+				if(prevPositions.length > 0) {
+					var dxy = u.subtractList(positions, prevPositions);
+				}
+				prevPositions = positions.slice();
+			}
+		}
+	}
+}
+
+document.addEventListener('gestureBegin', function () {
+	console.log('gestureBegin');
+});
+document.addEventListener('gestureEnd', function () {
+	console.log('gestureEnd');
+});
+var interactivep5 = new p5(interactiveSketch('nod-yes'), 'interactive');
+</script>
+</body>
+</html>

@@ -20,11 +20,11 @@ Computer vision and rendering of faces for a crowdsourced durational performance
   - need to add hysteresis to the description of the face, so it doesn't flicker
   - manual "reload" button?
   - should be able to change the effective cpu usage by modifying the runner function
-  - switch the utils that don't need to be public to private
+  - switch the utils that don't need to be public to private, or move outside of utils
+  - use better system for getting scale and orientation
 
 ## todo
 
-  - convert to multiple p5 canvases
   - center recordings for playback
   - recognize overall motion
   - recognize nod yes
