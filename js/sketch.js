@@ -1,9 +1,8 @@
 var interactiveSketch = function(p) {
   var u = new utils(p);
-  
+
   var capture;
   var tracker;
-  var canvas;
 
   var w = 640, h = 480;
   var drawCamera = true;
@@ -16,7 +15,7 @@ var interactiveSketch = function(p) {
   var zeros = [];
 
   function loadRecording(filename) {
-    loadJSON(filename, function(data) {
+    p.loadJSON(filename, function(data) {
       savedRecording = data;
     });
   }
@@ -58,26 +57,14 @@ var interactiveSketch = function(p) {
     if(key.key == '0') {
       savedRecording = [];
     }
-    if(key.key == '1') {
-      loadRecording('data/nod-no.json');
-    }
-    if(key.key == '2') {
-      loadRecording('data/nod-yes.json');
-    }
-    if(key.key == '3') {
-      loadRecording('data/surprised.json');
-    }
-    if(key.key == '4') {
-      loadRecording('data/yawn.json');
-    }
   }
 
   p.setup = function () {
-    canvas = p.createCanvas(w, h);
+    p.createCanvas(w, h);
     capture = p.createCapture(p.VIDEO);
     capture.size(w, h);
     capture.hide();
-    tracker = u.createTracker(capture);
+    tracker = createTracker(capture);
     p.colorMode(p.HSB);
   }
 
@@ -124,3 +111,36 @@ var interactiveSketch = function(p) {
 }
 
 var interactivep5 = new p5(interactiveSketch, 'interactive');
+
+var referenceTracker = createTracker();
+var dataAnimation = function(filename) {
+  return function(p) {
+    var u = new utils(p);
+    var w = 640, h = 480;
+    var frameNumber = 0;
+    var savedRecording = [];
+
+    p.loadJSON(filename, function(data) {
+      savedRecording = data;
+    });
+
+    p.setup = function () {
+      p.createCanvas(w, h);
+    }
+
+    p.draw = function () {
+      p.clear();
+      if(savedRecording.length > 0) {
+        var params = savedRecording[frameNumber % savedRecording.length];
+        var positions = referenceTracker.calculatePositions(params);
+        u.drawFace(positions, u.buildDescription(positions));
+        frameNumber++;
+      }
+    }
+  }
+}
+
+var datap5 = new p5(dataAnimation('data/nod-yes.json'), 'data-nod-yes');
+var datap5 = new p5(dataAnimation('data/nod-no.json'), 'data-nod-no');
+var datap5 = new p5(dataAnimation('data/surprised.json'), 'data-surprised');
+var datap5 = new p5(dataAnimation('data/yawn.json'), 'data-yawn');

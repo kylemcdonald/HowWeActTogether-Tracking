@@ -1,3 +1,19 @@
+function createTracker(capture) {
+	var tracker = new clm.tracker({
+		searchWindow: 11,
+		scoreThreshold: 0.40,
+	});
+	tracker.init(pModel);
+	if(capture) {
+		tracker.start(capture.elt);
+	}
+	// document.addEventListener('clmtrackrIteration', clmtrackrIteration);
+	// document.addEventListener('clmtrackrLost', clmtrackrLost);
+	// document.addEventListener('clmtrackrNotFound', clmtrackrNotFound);
+	// document.addEventListener('clmtrackrConverged', clmtrackrConverged);
+	return tracker;
+};
+
 var utils = function(p) {
 
 	var module = {};
@@ -5,20 +21,6 @@ var utils = function(p) {
 	var config = {
 		mouthOpennessThreshold: 0.1,
 		irisSize: 0.121
-	};
-
-	module.createTracker = function(capture) {
-		var tracker = new clm.tracker({
-			searchWindow: 11,
-			scoreThreshold: 0.30,
-		});
-		tracker.init(pModel);
-		tracker.start(capture.elt);
-		// document.addEventListener('clmtrackrIteration', clmtrackrIteration);
-		// document.addEventListener('clmtrackrLost', clmtrackrLost);
-		// document.addEventListener('clmtrackrNotFound', clmtrackrNotFound);
-		// document.addEventListener('clmtrackrConverged', clmtrackrConverged);
-		return tracker;
 	};
 
 	module.formatRecording = function (recording) {
