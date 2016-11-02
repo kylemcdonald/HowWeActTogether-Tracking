@@ -21,11 +21,11 @@ var utils = {
 
   formatRecording: function (recording) {
     var precision = 4;
-    return '{"recording":[' + recording.map(function (frame) {
+    return '[' + recording.map(function (frame) {
       return '[' + frame.map(function (param) {
         return param.toPrecision(precision);
       }).join(',') + ']';
-    }).join(',') + ']}';
+    }).join(',') + ']';
   },
 
   resetTracker: function (tracker, capture) {

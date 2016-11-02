@@ -12,7 +12,7 @@ var recording = false;
 
 function loadRecording(filename) {
   loadJSON(filename, function(data) {
-    savedRecording = data.recording;
+    savedRecording = data;
   });
 }
 
