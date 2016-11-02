@@ -22,7 +22,7 @@
 <div id="interactive"></div>
 <script src="js/utils.js"></script>
 <script>
-var interactiveSketch = function (targetGesture) {
+var interactiveSketch = function (targetAct) {
 	return function(p) {
 		var u = new utils(p);
 
@@ -50,11 +50,11 @@ var interactiveSketch = function (targetGesture) {
 
 		p.keyPressed = function (key) {
 			if(key.key == '[') {
-				var e = new Event('gestureBegin');
+				var e = new Event('actBegin');
 				document.dispatchEvent(e);
 			}
 			if(key.key == ']') {
-				var e = new Event('gestureEnd');
+				var e = new Event('actEnd');
 				document.dispatchEvent(e);
 			}
 			if(key.key == 'z') {
@@ -107,11 +107,11 @@ var interactiveSketch = function (targetGesture) {
 	}
 }
 
-document.addEventListener('gestureBegin', function () {
-	console.log('gestureBegin');
+document.addEventListener('actBegin', function () {
+	console.log('actBegin');
 });
-document.addEventListener('gestureEnd', function () {
-	console.log('gestureEnd');
+document.addEventListener('actEnd', function () {
+	console.log('actEnd');
 });
 var interactivep5 = new p5(interactiveSketch('nod-yes'), 'interactive');
 </script>
