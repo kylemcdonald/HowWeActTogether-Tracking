@@ -10,6 +10,8 @@ var frameNumber = 0;
 var savedRecording = [];
 var recording = false;
 
+var zeros = [];
+
 function loadRecording(filename) {
   loadJSON(filename, function(data) {
     savedRecording = data;
@@ -83,10 +85,20 @@ function draw() {
     background(0);
   }
   var positions = tracker.getCurrentPosition();
+  var params = tracker.getCurrentParameters();
 
   if(positions.length > 0) {
     utils.drawFace(positions, utils.buildDescription(positions));
-    // utils.drawParameters(tracker.getCurrentParameters());
+    // utils.drawParameters(params);
+
+    if(zeros.length) {
+      var modifiedParameters = params.slice();
+      zeros.forEach(function (i) {
+        modifiedParameters[i] = 0;
+      })
+      var modifiedPositions = tracker.calculatePositions(modifiedParameters);
+      utils.drawFace(modifiedPositions, utils.buildDescription(modifiedPositions));    
+    }
 
     if(prevPositions.length > 0) {
       var dxy = utils.subtractList(positions, prevPositions);
@@ -94,7 +106,7 @@ function draw() {
     prevPositions = positions.slice();
 
     if(recording) {
-      savedRecording.push(tracker.getCurrentParameters().slice());   
+      savedRecording.push(params.slice());   
     }
   }
 
