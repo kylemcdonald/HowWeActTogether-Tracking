@@ -16,9 +16,12 @@
  -->
 
 <script src="libs/model_pca_20_svm.js"></script>
-<style>*{font-family: sans-serif;}</style>
+<style>
+*{font-family: sans-serif;}
+p{font-size: 2em; margin: .5em 1em; color: "lightgray";}
+</style>
 </head>
-<body style="background:gray">
+<body>
 <div id="interactive"></div>
 <script src="js/utils.js"></script>
 <script>
@@ -86,8 +89,13 @@ var interactiveSketch = function (targetAct) {
 			var params = tracker.getCurrentParameters();
 
 			if(positions.length > 0) {
-				u.drawFace(positions, u.buildDescription(positions));
+				var description = u.buildDescription(positions);
+				u.drawFace(positions, description);
 				// u.drawParameters(params);
+
+				p.select('#smiling').style('color', description.smiling ? 'black' : 'lightgray');
+				p.select('#screaming').style('color', description.screaming ? 'black' : 'lightgray');
+				p.select('#mouthOpen').style('color', description.mouthOpen ? 'black' : 'lightgray');
 
 				if(zeros.length) {
 					var modifiedParameters = params.slice();
@@ -115,5 +123,8 @@ document.addEventListener('actEnd', function () {
 });
 var interactivep5 = new p5(interactiveSketch('nod-yes'), 'interactive');
 </script>
+<p id="smiling">Smiling</p>
+<p id="screaming">Screaming</p>
+<p id="mouthOpen">Mouth open</p>
 </body>
 </html>

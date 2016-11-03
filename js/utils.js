@@ -20,7 +20,9 @@ var utils = function(p) {
 
 	var config = {
 		mouthOpennessThreshold: 0.1,
-		irisSize: 0.121
+		irisSize: 0.121,
+		smileThreshold: 0.58,
+		screamingThreshold: 0.4
 	};
 
 	module.formatRecording = function (recording) {
@@ -139,6 +141,7 @@ var utils = function(p) {
 		var mouthLR = module.distance(positions[44], positions[50]);
 		var mouthUD = module.distance(positions[60], positions[57]);
 		var mouthOpenness = mouthUD / mouthLR;
+		var smileness = module.distance(positions[44], positions[50]) / faceScale;
 
 		// var scale = params[0];
 		// var zrotation = params[1];
@@ -148,6 +151,8 @@ var utils = function(p) {
 		// var xrotation = params[5];
 
 		description.faceScale = faceScale;
+		description.smiling = smileness > config.smileThreshold;
+		description.screaming = mouthOpenness > config.screamingThreshold;
 		description.mouthOpen = mouthOpenness > config.mouthOpennessThreshold;
 
 		return description;

@@ -2,6 +2,10 @@
 
 Computer vision and rendering of faces for a crowdsourced durational performance.
 
+  - Talk with Schirn about getting DNS record switched.
+  - Check with Lauren about the language switch.
+  - LetsEncrypt get SSL certificates
+
 ## bugs
 
   - often initializes with a big rotation, not good.
@@ -20,7 +24,8 @@ Computer vision and rendering of faces for a crowdsourced durational performance
   - need to add hysteresis to the description of the face, so it doesn't flicker
   - manual "reload" button?
   - should be able to change the effective cpu usage by modifying the runner function
-  - switch the utils that don't need to be public to private, or move outside of utils
+  - separate utils into drawing and non-drawing utils
+  - don't draw irises all the way to eyelids
   - use better system for getting scale and orientation
 
 ## todo
