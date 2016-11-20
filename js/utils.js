@@ -18,12 +18,19 @@ var utils = function(p) {
 
 	var module = {};
 
-	var config = {
-		mouthOpennessThreshold: 0.1,
-		irisSize: 0.121,
-		smileThreshold: 0.58,
-		screamingThreshold: 0.4
-	};
+	function Config() {
+		this.mouthOpennessThreshold = 0.1;
+		this.irisSize = 0.121;
+		this.smileThreshold = 0.58;
+		this.screamingThreshold = 0.4;
+	}
+
+  config = new Config();
+  var gui = new dat.GUI();
+  gui.add(config, 'mouthOpennessThreshold', 0, 1);
+  gui.add(config, 'irisSize', 0, 1);
+  gui.add(config, 'smileThreshold', 0, 1);
+  gui.add(config, 'screamingThreshold', 0, 1);
 
 	module.formatRecording = function (recording) {
 		var precision = 4;
@@ -150,6 +157,7 @@ var utils = function(p) {
 		// var yrotation = params[4];
 		// var xrotation = params[5];
 
+		description.faceCenter = faceCenter;
 		description.faceScale = faceScale;
 		description.smiling = smileness > config.smileThreshold;
 		description.screaming = mouthOpenness > config.screamingThreshold;

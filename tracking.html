@@ -3,10 +3,16 @@
 <meta charset="UTF-8">
 <title>How We Act Together Tracking</title>
 
-<script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.4/p5.js"></script>
+<!-- <script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.4/p5.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.4/addons/p5.dom.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.16.5/lodash.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/clmtrackr/1.0.0/clmtrackr.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/clmtrackr/1.0.0/clmtrackr.js"></script> -->
+
+<script src="js/local/p5.js"></script>
+<script src="js/local/p5.dom.js"></script>
+<script src="js/local/lodash.js"></script>
+<script src="js/local/clmtrackr-test.js"></script>
+<script src="js/local/dat.gui.min.js"></script>
 
 <!-- 
 <script src="libs/p5.min.js"></script>
@@ -121,6 +127,9 @@ document.addEventListener('actBegin', function () {
 document.addEventListener('actEnd', function () {
 	console.log('actEnd');
 });
+
+
+
 var interactivep5 = new p5(interactiveSketch('nod-yes'), 'interactive');
 </script>
 <p id="smiling">Smiling</p>
