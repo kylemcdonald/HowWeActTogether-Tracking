@@ -41,7 +41,6 @@ function Hysteresis(risingDelay, fallingDelay) {
       }
     }
     this.lastValue = value;
-    console.log(this.curValue);
     return this.curValue;
   };
 
