@@ -29,6 +29,7 @@ p{font-size: 2em; margin: .5em 1em; color: "lightgray";}
 </head>
 <body>
 <div id="interactive"></div>
+<script src="js/hysteresis.js"></script>
 <script src="js/utils.js"></script>
 <script>
 var interactiveSketch = function (targetAct) {
@@ -95,13 +96,13 @@ var interactiveSketch = function (targetAct) {
 			var params = tracker.getCurrentParameters();
 
 			if(positions.length > 0) {
-				var description = u.buildDescription(positions);
+				var description = u.buildDescription(positions, params);
 				u.drawFace(positions, description);
 				// u.drawParameters(params);
 
-				p.select('#smiling').style('color', description.smiling ? 'black' : 'lightgray');
-				p.select('#screaming').style('color', description.screaming ? 'black' : 'lightgray');
-				p.select('#mouthOpen').style('color', description.mouthOpen ? 'black' : 'lightgray');
+				p.select('#smiling').style('color', description.smiling.curValue ? 'black' : 'lightgray');
+				p.select('#screaming').style('color', description.screaming.curValue ? 'black' : 'lightgray');
+				p.select('#mouthOpen').style('color', description.mouthOpen.curValue ? 'black' : 'lightgray');
 
 				if(zeros.length) {
 					var modifiedParameters = params.slice();

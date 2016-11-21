@@ -1,5 +1,5 @@
-function Hysteresis() {
-  this.risingDelay = 0;
+function Hysteresis(risingDelay, fallingDelay) {
+  this.risingDelay = 0; // setDelay called at bottom
   this.fallingDelay = 0;
   this.lastTime = 0;
   this.lastValue = false;
@@ -13,6 +13,9 @@ function Hysteresis() {
   };
 
   this.setDelay = function(risingDelay, fallingDelay) {
+    if (typeof risingDelay === 'undefined') {
+      risingDelay = 0;
+    }
     if (typeof fallingDelay === 'undefined') {
       fallingDelay = risingDelay;
     }
@@ -38,6 +41,7 @@ function Hysteresis() {
       }
     }
     this.lastValue = value;
+    console.log(this.curValue);
     return this.curValue;
   };
 
@@ -55,4 +59,6 @@ function Hysteresis() {
     this.lastTime = performance.now();
     return this.curValue;
   };
+
+  this.setDelay(risingDelay, fallingDelay);
 }
