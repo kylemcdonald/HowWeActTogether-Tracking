@@ -31,13 +31,13 @@ var utils = function(p) {
 		this.shakeMaxThreshold = 2.0;
 	}
 
-  config = new Config();
-  var gui = new dat.GUI();
-  gui.add(config, 'mouthOpennessThreshold', 0, 1);
-  gui.add(config, 'irisSize', 0, 1);
-  gui.add(config, 'smileThreshold', 0, 1);
-  gui.add(config, 'screamingThreshold', 0, 1);
-  gui.add(config, 'shakeMaxThreshold', 0, 5.0);
+  // config = new Config();
+  // var gui = new dat.GUI();
+  // gui.add(config, 'mouthOpennessThreshold', 0, 1);
+  // gui.add(config, 'irisSize', 0, 1);
+  // gui.add(config, 'smileThreshold', 0, 1);
+  // gui.add(config, 'screamingThreshold', 0, 1);
+  // gui.add(config, 'shakeMaxThreshold', 0, 5.0);
 
 
 	// copy an array, creating a new array if necessary
