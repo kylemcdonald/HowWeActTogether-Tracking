@@ -30,6 +30,7 @@ Computer vision and rendering of faces for a crowdsourced durational performance
 
 ## todo
 
+  - add logo for schirn
   - center recordings for playback
   - recognize overall motion
   - recognize nod yes
@@ -39,3 +40,22 @@ Computer vision and rendering of faces for a crowdsourced durational performance
   - recognize eyes shut: more difficult than expected...
   - add clean interface for start/stop and returning status
   - additional visual indicator of gesture being "activated"
+
+## acts
+
+### nod yes
+
+  - optical flow on face-area points could work well
+  - using the data from the facetracker itself ensures that visitors know when it's working correctly and when it's not
+
+### scream
+
+  - use just the mouth detection
+  - needs to have longer hysteresis than the others because people need to take a break from screaming
+
+### greet
+
+  - optical flow doesn't work very well for this because there are no features in a blurry hand
+  - quickest version is just using continuous motion in one region
+  - better version does hs or farneback flow to get left-right motion
+  - advanced version would do autocorrelation on low resolution images

@@ -25,6 +25,30 @@ var utils = function(p) {
 		screamingThreshold: 0.4
 	};
 
+
+	// copy an array, creating a new array if necessary
+	// usage: dst = copyImage(src, dst)
+	// based on http://jsperf.com/new-array-vs-splice-vs-slice/113
+	module.copyImage = function (src, dst) {
+	  var n = src.length;
+	  if(!dst || dst.length != n) {
+		dst = new src.constructor(n);
+	  }
+	  while(n--) {
+		dst[n] = src[n];
+	  }
+	  return dst;
+	}
+
+	module.same = function(a1, a2, stride, n) {
+		for(var i = 0; i < n; i+=stride) {
+			if(a1[i] != a2[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	module.formatRecording = function (recording) {
 		var precision = 4;
 		return '[' + recording.map(function (frame) {
