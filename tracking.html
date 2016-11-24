@@ -3,17 +3,13 @@
 <meta charset="UTF-8">
 <title>How We Act Together Tracking</title>
 
-<!-- <script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.4/p5.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.4/addons/p5.dom.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.16.5/lodash.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/clmtrackr/1.0.0/clmtrackr.js"></script>
- -->
+<script src="js/local/p5.js"></script>
+<script src="js/local/p5.dom.js"></script>
+<script src="js/local/lodash.js"></script>
+<script src="js/local/clmtrackr-test.js"></script>
+<script src="js/local/dat.gui.min.js"></script>
 
-<script src="libs/p5.js"></script>
-<script src="libs/p5.dom.js"></script>
-<script src="libs/lodash.js"></script>
-<script src="libs/clmtrackr.js"></script>
-
+<!-- <script src="libs/clmtrackr.js"></script> -->
 
 <script src="libs/model_pca_20_svm.js"></script>
 <style>
@@ -23,6 +19,7 @@ p{font-size: 2em; margin: .5em 1em; color: "lightgray";}
 </head>
 <body>
 <div id="interactive"></div>
+<script src="js/hysteresis.js"></script>
 <script src="js/utils.js"></script>
 <script>
 var interactiveSketch = function (targetAct) {
@@ -89,13 +86,13 @@ var interactiveSketch = function (targetAct) {
 			var params = tracker.getCurrentParameters();
 
 			if(positions.length > 0) {
-				var description = u.buildDescription(positions);
+				var description = u.buildDescription(positions, params);
 				u.drawFace(positions, description);
 				// u.drawParameters(params);
 
-				p.select('#smiling').style('color', description.smiling ? 'black' : 'lightgray');
-				p.select('#screaming').style('color', description.screaming ? 'black' : 'lightgray');
-				p.select('#mouthOpen').style('color', description.mouthOpen ? 'black' : 'lightgray');
+				p.select('#smiling').style('color', description.smiling.curValue ? 'black' : 'lightgray');
+				p.select('#screaming').style('color', description.screaming.curValue ? 'black' : 'lightgray');
+				p.select('#mouthOpen').style('color', description.mouthOpen.curValue ? 'black' : 'lightgray');
 
 				if(zeros.length) {
 					var modifiedParameters = params.slice();
@@ -121,6 +118,9 @@ document.addEventListener('actBegin', function () {
 document.addEventListener('actEnd', function () {
 	console.log('actEnd');
 });
+
+
+
 var interactivep5 = new p5(interactiveSketch('nod-yes'), 'interactive');
 </script>
 <p id="smiling">Smiling</p>
