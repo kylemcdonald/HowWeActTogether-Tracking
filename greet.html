@@ -3,6 +3,7 @@
   <meta charset="UTF-8">
   <title>Greet</title>
   <script src="js/local/p5.js"></script>
+  <script src="js/local/p5.sound.js"></script>
   <script src="js/local/p5.dom.js"></script>
   <script src="js/local/lodash.js"></script>
   <script src="js/local/dat.gui.min.js"></script>
@@ -52,8 +53,6 @@ function draw() {
   var status = hys.update(detector.getStatus());
   var opacity = status ? 1 : .1;
   select('#act').style('opacity', opacity);
-
-  rect(0, 0, hys.curValueContinuous * width, 10);
 }
 </script>
 </body>
