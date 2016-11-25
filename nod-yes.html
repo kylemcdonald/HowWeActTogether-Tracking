@@ -22,7 +22,7 @@
 var u = new utils();
 
 class NodDetector {
-  constructor(minDuration = 0.2, maxDuration = 1, agreement = 0.5, minMotion = 2) {
+  constructor(minDuration = 0.3, maxDuration = 1, agreement = 0.5, minMotion = 2) {
     this.minDuration = minDuration;
     this.maxDuration = maxDuration;
     this.agreement = agreement;
@@ -61,7 +61,7 @@ class NodDetector {
               if(averageMotion > this.minMotion) {
                 this.lastNodTime = curTime;
                 isNod = true;
-                // console.log('good nod');
+                // console.log('good nod ' + averageMotion);
               } else {
                 // console.log('nod is too weak');
               }
@@ -140,8 +140,8 @@ function draw() {
 
     noFill();
     stroke(255);
-    // vMotionGraph.draw(width, height);
-    // line(0, height / 2, width, height / 2);
+    vMotionGraph.draw(width, height);
+    line(0, height / 2, width, height / 2);
 
     var timeSinceNod = detector.getTimeSinceNod();
     if(timeSinceNod) {

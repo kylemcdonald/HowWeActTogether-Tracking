@@ -27,6 +27,7 @@ Computer vision and rendering of faces for a crowdsourced durational performance
   - separate utils into drawing and non-drawing utils
   - don't draw irises all the way to eyelids
   - use better system for getting scale and orientation
+  - need to test on different resolution webcams
 
 ## todo
 

@@ -1,0 +1,120 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Greet</title>
+  <script src="js/local/p5.js"></script>
+  <script src="js/local/p5.dom.js"></script>
+  <script src="js/local/lodash.js"></script>
+  <script src="js/local/dat.gui.min.js"></script>
+
+  <script src="js/flow.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/ratetimer.js"></script>
+  <script src="js/hysteresis.js"></script>
+  <script src="js/graph.js"></script>
+
+  <style>*{font-family: sans-serif;}</style>
+</head>
+<body>
+<!-- <p>Camera <span id="cameraFrameRate">0</span> fps</p>
+<p>App <span id="appFrameRate">0</span> fps</p> -->
+<script>
+
+class GreetDetector {
+  // thresholds on the standard deviation of the binned motion.
+  // if motion is uniform in all directions and speeds (low standard deviation)
+  // then it counts as a greeting. this threshold is in seconds.
+  // if the threshold is increased (.12, .13, .14...) then the detector is more liberal.
+  // if it's decreased (.10, .09, .08...) then it's more conservative.
+  constructor(waveThreshold = 0.11) {
+    this.waveThreshold = waveThreshold;
+    this.step = 4;
+    this.bins = 7;
+    this.lastMotion = new Float32Array(this.bins * this.bins);
+    this.flow = new FlowCalculator(this.step);
+    this.lastDetectedTime = undefined;
+  }
+
+  getTimeSinceDetection() {
+    if(!this.lastDetectedTime) {
+      return undefined;
+    }
+    var curTime = window.performance.now() / 1000;
+    return curTime - this.lastDetectedTime;
+  }
+
+  update(curPixels, previousPixels, w, h) {
+    var curTime = window.performance.now() / 1000;
+
+    this.flow.calculateRgba(previousPixels, curPixels, w, h);
+    var maxSide = (this.step * 2 + 1);
+    var multiplier = this.bins / (2 * maxSide);
+    this.flow.flow.zones.forEach((zone) => {
+      var x = Math.floor(multiplier * (maxSide + zone.u));
+      var y = Math.floor(multiplier * (maxSide + zone.v));
+      var i = y * this.bins + x;
+      this.lastMotion[i] = curTime;
+    })
+
+    var averageDiff = 0;
+    for(var i = 0; i < this.lastMotion.length; i++) {
+      if(this.lastMotion[i] > 0) {
+        var curDiff = curTime - this.lastMotion[i];
+        averageDiff += curDiff;
+      }
+    }
+    averageDiff /= this.lastMotion.length;
+
+    var sumSqDiff = 0;
+    for(var i = 0; i < this.lastMotion.length; i++) {
+      var curDiff = curTime - this.lastMotion[i];
+      curDiff *= curDiff;
+      sumSqDiff += curDiff;
+    }
+    sumSqDiff /= this.lastMotion.length;
+    sumSqDiff = Math.pow(sumSqDiff, .5);
+
+    var isGreet = sumSqDiff < this.waveThreshold;
+    if(isGreet) {
+      this.lastDetectedTime = curTime;
+    }
+    return isGreet;
+  }
+}
+
+var u = new utils();
+var capture;
+var previousPixels;
+var detector = new GreetDetector();
+
+var w = 640, h = 480;
+
+function setup() {
+  createCanvas(w, h);
+  capture = createCapture(VIDEO);
+  capture.hide();
+}
+
+function draw() {
+  capture.loadPixels();
+  if(capture.pixels.length > 0) {
+
+    if(previousPixels) {
+      // cheap way to ignore duplicate frames
+      if(u.same(previousPixels, capture.pixels, 4, width)) {
+        return;
+      }
+
+      image(capture, 0, 0);
+
+      var detected = detector.update(previousPixels, capture.pixels, w, h);
+      if(detected) {
+        console.log('greet');
+      }
+    }
+    previousPixels = u.copyImage(capture.pixels, previousPixels);
+  }
+}
+</script>
+</body>
+</html>

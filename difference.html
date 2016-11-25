@@ -1,0 +1,218 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>DifferenceImage</title>
+  <script src="js/local/p5.js"></script>
+  <script src="js/local/p5.dom.js"></script>
+  <script src="js/local/lodash.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/hysteresis.js"></script>
+  <script src="js/ratetimer.js"></script>
+  <script src="js/graph.js"></script>
+  <style>*{font-family: sans-serif;}</style>
+</head>
+<body>
+<ul>
+  <li>Camera <span id="cameraFrameRate">0</span> fps</li>
+  <li>App <span id="appFrameRate">0</span> fps</li>
+</ul>
+<!-- 
+  <p>
+    <input type="range" id="thresholdAmount" value="25">
+    Motion: <span id="motion">0</span>
+  </p> -->
+<script>
+/*
+what's the most robust way to do motion detection?
+we want to avoid the problems of setting thresholds for different environments
+maybe analyze the diversity of color in the image, use that as an estimate for motion threshold?
+look at the max and min amount of motion (over some minimum threshold)?
+or ignore all these fancy tricks and chose the simplest algorithm?
+
+let's do that.
+
+1. calculate frame difference
+2. in sub-regions, find the max motion
+3. count 
+
+
+can make this go faster by only analyzing one channel of video
+might be some tricks with native datatypes, like in jsfeat
+first version:
+x create integral image
+x create low resolution difference image
+- check for sustained motion
+second version:
+- make low resolution version of current image
+- save current image to array of images
+- look through previous values for each pixel to find a delay maximizing similarity (does this have to be n^2?)
+- find a region with repetition in the range of waving
+
+might not need an integral image if we're just summing each region once..
+integral image is more useful for large lookups, or blurring
+*/
+
+'use strict';
+
+var w = 640, h = 480;
+
+var stepSize = 32;
+var mw = w / stepSize, mh = h / stepSize;
+var memory;
+
+var u = new utils();
+var capture;
+var previousPixels;
+var integralImage;
+
+var maxMotionGraph;
+var averageMotionGraph;
+var directAverageGraph;
+
+var cameraTimer = new RateTimer();
+var appTimer = new RateTimer();
+
+function getValue(image, stride, x, y) {
+  return image[y * stride + x];
+}
+
+function getIntegral(integralImage, w, h, rx, ry, rw, rh) {
+  var xx = Math.min(w - 1, rx + rw);
+  var yy = Math.min(h - 1, ry + rh);
+  var nw = getValue(integralImage, w, rx, ry);
+  var ne = getValue(integralImage, w, xx, ry);
+  var sw = getValue(integralImage, w, rx, yy);
+  var se = getValue(integralImage, w, xx, yy);
+  return se - nw - (ne - nw) - (sw - nw);
+}
+
+function setup() {
+  capture = createCapture(VIDEO);
+  createCanvas(w, h);
+  capture.size(w, h);
+  integralImage = new Int32Array(w * h);
+  memory = new Float32Array(mw * mh);
+  maxMotionGraph = new Graph(200, 0, 255);
+  averageMotionGraph = new Graph(200, 0, 255);
+  directAverageGraph = new Graph(200, 0, 255);
+  capture.hide();
+}
+
+function draw() {
+  capture.loadPixels();
+
+  var total = 0;
+  if(capture.pixels.length > 0) { // don't forget this!
+    if(!previousPixels) {
+      previousPixels = u.copyImage(capture.pixels, previousPixels);
+    } else {
+      var w = capture.width, h = capture.height;
+      var i = 0; // rgba image four channel
+      var j = 0; // integral image single channel
+      var pixels = capture.pixels;
+
+      for(var y = 0; y < h; y++) {
+        for(var x = 0; x < w; x++) {
+          var rdiff = Math.abs(pixels[i+0] - previousPixels[i+0]);
+          previousPixels[i+0] = pixels[i+0];
+          var gdiff = Math.abs(pixels[i+1] - previousPixels[i+1]);
+          previousPixels[i+1] = pixels[i+1];
+          var bdiff = Math.abs(pixels[i+2] - previousPixels[i+2]);
+          previousPixels[i+2] = pixels[i+2];
+          var diffs = rdiff + gdiff + bdiff;
+          var output = diffs / 3;
+          total += diffs;
+
+          var integralTopLeft = 0;
+          var integralLeft = 0;
+          var integralTop = 0;
+          if(y > 0) {
+            integralTop = integralImage[j - w];
+          }
+          if(x > 0) {
+            integralLeft = integralImage[j - 1];
+          }
+          if(x > 0 && y > 0) {
+            integralTopLeft = integralImage[j - w - 1];
+          }
+          integralImage[j] = output + integralTopLeft + 
+            (integralTop - integralTopLeft) +
+            (integralLeft - integralTopLeft);
+          j++;
+
+          var output = integralImage[j] & 255;
+
+          pixels[i++] = output;
+          pixels[i++] = output;
+          pixels[i++] = output;
+          i++; // skip alpha
+        }
+      }
+    }
+  }
+
+  // need this because sometimes the frames are repeated
+  // in some tests, every 5th frame is a duplicate
+  appTimer.tick();
+  if(total > 0) {
+    cameraTimer.tick();
+
+    capture.updatePixels();
+
+    noStroke();
+    var decay = 0.9;
+    var i = 0;
+    var averageMotion = 0;
+    var maxMotion = 0;
+    var area = stepSize * stepSize;
+    for(var y = 0; y < h; y += stepSize) {
+      for(var x = 0; x < w; x += stepSize) {
+        var cur = getIntegral(integralImage, w, h, x, y, stepSize, stepSize) / area;
+        if(cur < memory[i]) {
+          cur = memory[i] * decay;
+        }
+        memory[i] = cur;
+        averageMotion += cur;
+        maxMotion = Math.max(maxMotion, cur);
+        i++;
+      }
+    }
+    averageMotion /= i;
+
+    i = 0;
+    for(var y = 0; y < h; y += stepSize) {
+      for(var x = 0; x < w; x += stepSize) {
+        // var cur = getIntegral(integralImage, w, h, x, y, stepSize, stepSize) / area;
+        var cur = memory[i];
+        noStroke();
+        fill((cur * 255) / maxMotion, 255);
+        rect(x, y, stepSize, stepSize);
+        if(cur > averageMotion * 2) {
+          noFill();
+          stroke(255);
+          rect(x+1, y+1, stepSize-2, stepSize-2);
+        }
+        i++;
+      }
+    }
+
+
+    // stroke(255, 0, 0);
+    // maxMotionGraph.addSample(maxMotion);
+    // maxMotionGraph.draw(width, height);
+
+    // stroke(0, 255, 0);
+    // averageMotionGraph.addSample(averageMotion);
+    // averageMotionGraph.draw(width, height);
+
+    // stroke(0, 0, 255);
+    // directAverageGraph.addSample(getIntegral(integralImage, w, h, 0, 0, w, h) / float(w * h));
+    // directAverageGraph.draw(width, height);
+  }
+
+  select('#appFrameRate').elt.innerText = int(appTimer.getFrameRate());
+  select('#cameraFrameRate').elt.innerText = int(cameraTimer.getFrameRate());
+}
+</script>
+</body>
+</html>

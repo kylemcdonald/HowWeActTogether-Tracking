@@ -14,9 +14,15 @@ class FlowCalculator {
     this.step = step;
   }
 
-  // assumes rgba images, but only uses red channel
-  // might be less noise if using green channel instead
-  calculate (oldImage, newImage, width, height) {
+  calculateGray (oldImage, newImage, width, height) {
+    return this.calculate (oldImage, newImage, width, height, 1);
+  }
+
+  calculateRgba (oldImage, newImage, width, height) {
+    return this.calculate (oldImage, newImage, width, height, 4);
+  }
+
+  calculate (oldImage, newImage, width, height, channels) {
     var zones = [];
     var step = this.step;
     var winStep = step * 2 + 1;
@@ -36,9 +42,9 @@ class FlowCalculator {
           for (localX = -step; localX <= step; localX++) {
             var address = (globalY + localY) * width + globalX + localX;
 
-            var gradX = (newImage[(address - 1) * 4]) - (newImage[(address + 1) * 4]);
-            var gradY = (newImage[(address - width) * 4]) - (newImage[(address + width) * 4]);
-            var gradT = (oldImage[address * 4]) - (newImage[address * 4]);
+            var gradX = (newImage[(address - 1) * channels]) - (newImage[(address + 1) * channels]);
+            var gradY = (newImage[(address - width) * channels]) - (newImage[(address + width) * channels]);
+            var gradT = (oldImage[address * channels]) - (newImage[address * channels]);
 
             A2 += gradX * gradX;
             A1B2 += gradX * gradY;
@@ -88,5 +94,6 @@ class FlowCalculator {
     };
 
     return this.flow;
-  };
+  }
+
 };
