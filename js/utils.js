@@ -127,9 +127,6 @@ var utils = function(p) {
 
   var module = {};
   var description = {
-    smiling: new Hysteresis(1),
-    screaming: new Hysteresis(1),
-    mouthOpen: new Hysteresis(1)
   };
 
   function Config() {
@@ -140,7 +137,7 @@ var utils = function(p) {
     this.shakeMaxThreshold = 2.0;
   }
 
-  // config = new Config();
+  config = new Config();
   // var gui = new dat.GUI();
   // gui.add(config, 'mouthOpennessThreshold', 0, 1);
   // gui.add(config, 'irisSize', 0, 1);
@@ -189,8 +186,7 @@ var utils = function(p) {
   };
 
   module.buildDescription = function (positions, params) {
-    console.log(params[0], params[1])
-
+    // console.log(params[0], params[1])
 
     var faceCenter = estimateCenter(positions);
     var faceScale = estimateScale(positions);
@@ -210,9 +206,10 @@ var utils = function(p) {
 
     description.faceCenter = faceCenter;
     description.faceScale = faceScale;
-    description.smiling.update(smileness > config.smileThreshold);
-    description.screaming.update(mouthOpenness > config.screamingThreshold);
-    description.mouthOpen.update(mouthOpenness > config.mouthOpennessThreshold);
+
+    description.smiling = (smileness > config.smileThreshold);
+    description.screaming = (mouthOpenness > config.screamingThreshold);
+    description.mouthOpen = (mouthOpenness > config.mouthOpennessThreshold);
 
     return description;
   };

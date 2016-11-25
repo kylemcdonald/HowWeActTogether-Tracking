@@ -3,19 +3,15 @@
 <meta charset="UTF-8">
 <title>How We Act Together Playback</title>
 
-<script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.4/p5.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.4/addons/p5.dom.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.16.5/lodash.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/clmtrackr/1.0.0/clmtrackr.js"></script>
+<script src="js/local/p5.js"></script>
+<script src="js/local/p5.dom.js"></script>
+<script src="js/local/lodash.js"></script>
+<script src="js/local/clmtrackr.js"></script>
+<script src="js/local/dat.gui.min.js"></script>
+<script src="js/model_pca_20_svm.js"></script>
 
-<!-- 
-<script src="libs/p5.min.js"></script>
-<script src="libs/p5.dom.min.js"></script>
-<script src="libs/lodash.min.js"></script>
-<script src="libs/clmtrackr/clmtrackr.js"></script>
- -->
+<script src="js/utils.js"></script>
 
-<script src="libs/model_pca_20_svm.js"></script>
 <style>*{font-family: sans-serif;}</style>
 </head>
 <body style="background:gray">
@@ -23,7 +19,6 @@
 <div id="data-nod-no"></div>
 <div id="data-surprised"></div>
 <div id="data-yawn"></div>
-<script src="js/utils.js"></script>
 <script>
 var referenceTracker = createTracker();
 var dataAnimation = function(filename) {

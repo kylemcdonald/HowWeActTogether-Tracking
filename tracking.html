@@ -6,12 +6,13 @@
 <script src="js/local/p5.js"></script>
 <script src="js/local/p5.dom.js"></script>
 <script src="js/local/lodash.js"></script>
-<script src="js/local/clmtrackr-test.js"></script>
+<script src="js/local/clmtrackr.js"></script>
 <script src="js/local/dat.gui.min.js"></script>
+<script src="js/model_pca_20_svm.js"></script>
 
-<!-- <script src="libs/clmtrackr.js"></script> -->
+<script src="js/hysteresis.js"></script>
+<script src="js/utils.js"></script>
 
-<script src="libs/model_pca_20_svm.js"></script>
 <style>
 *{font-family: sans-serif;}
 p{font-size: 2em; margin: .5em 1em; color: "lightgray";}
@@ -19,8 +20,6 @@ p{font-size: 2em; margin: .5em 1em; color: "lightgray";}
 </head>
 <body>
 <div id="interactive"></div>
-<script src="js/hysteresis.js"></script>
-<script src="js/utils.js"></script>
 <script>
 var interactiveSketch = function (targetAct) {
 	return function(p) {
@@ -34,6 +33,12 @@ var interactiveSketch = function (targetAct) {
 
 		var prevPositions = [];
 		var zeros = [];
+
+		var hys = {
+	    	smiling: new Hysteresis(1),
+	    	screaming: new Hysteresis(1),
+	    	mouthOpen: new Hysteresis(1)
+		}
 
 		// function clmtrackrIteration() {
 		//   // console.log('clmtrackrIteration');
@@ -58,7 +63,7 @@ var interactiveSketch = function (targetAct) {
 				document.dispatchEvent(e);
 			}
 			if(key.key == 'z') {
-				u.resetTracker(tracker, capture);
+				resetTracker(tracker, capture);
 			}
 			if(key.key == 'x') {
 				tracker.stop();
@@ -90,9 +95,13 @@ var interactiveSketch = function (targetAct) {
 				u.drawFace(positions, description);
 				// u.drawParameters(params);
 
-				p.select('#smiling').style('color', description.smiling.curValue ? 'black' : 'lightgray');
-				p.select('#screaming').style('color', description.screaming.curValue ? 'black' : 'lightgray');
-				p.select('#mouthOpen').style('color', description.mouthOpen.curValue ? 'black' : 'lightgray');
+				hys.smiling.update(description.smiling);
+				hys.screaming.update(description.screaming);
+				hys.mouthOpen.update(description.mouthOpen);
+
+				p.select('#smiling').style('color', hys.smiling.curValue ? 'black' : 'lightgray');
+				p.select('#screaming').style('color', hys.screaming.curValue ? 'black' : 'lightgray');
+				p.select('#mouthOpen').style('color', hys.mouthOpen.curValue ? 'black' : 'lightgray');
 
 				if(zeros.length) {
 					var modifiedParameters = params.slice();
@@ -104,7 +113,7 @@ var interactiveSketch = function (targetAct) {
 				}
 
 				if(prevPositions.length > 0) {
-					var dxy = u.subtractList(positions, prevPositions);
+					var dxy = subtractList(positions, prevPositions);
 				}
 				prevPositions = positions.slice();
 			}
@@ -118,8 +127,6 @@ document.addEventListener('actBegin', function () {
 document.addEventListener('actEnd', function () {
 	console.log('actEnd');
 });
-
-
 
 var interactivep5 = new p5(interactiveSketch('nod-yes'), 'interactive');
 </script>

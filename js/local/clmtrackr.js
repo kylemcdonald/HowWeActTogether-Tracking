@@ -1332,7 +1332,7 @@ var clm = {
 		})();
 		
 		var cancelRequestAnimFrame = (function() {
-			return window.cancelAnimationFrame ||
+			return window.cancelCancelRequestAnimationFrame ||
 				window.webkitCancelRequestAnimationFrame ||
 				window.mozCancelRequestAnimationFrame ||
 				window.oCancelRequestAnimationFrame ||
