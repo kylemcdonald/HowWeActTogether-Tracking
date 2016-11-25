@@ -3,7 +3,6 @@
   <meta charset="UTF-8">
   <title>Greet</title>
   <script src="js/local/p5.js"></script>
-  <script src="js/local/p5.sound.js"></script>
   <script src="js/local/p5.dom.js"></script>
   <script src="js/local/lodash.js"></script>
   <script src="js/local/dat.gui.min.js"></script>
@@ -30,7 +29,7 @@ var w = 640, h = 480;
 
 function newFrame(cam) {
   image(cam.capture, 0, 0);
-  var detected = detector.update(cam.previousPixels, cam.capture.pixels, cam.width, cam.height);
+  var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
   if(detected) {
     console.log('greet');
   }

@@ -11,6 +11,7 @@ class Camera {
     this.height = height;
     this.cbNewFrame = cbNewFrame;
 
+    this.currentPixels = undefined;
     this.previousPixels = undefined;
     this.rateTimer = new RateTimer();
 
@@ -32,16 +33,17 @@ class Camera {
   update() {
     window.requestAnimationFrame(this.update.bind(this));
     this.capture.loadPixels();
-    if(this.capture.pixels.length > 0) {
+    this.currentPixels = this.capture.pixels;
+    if(this.currentPixels.length > 0) {
       if(typeof this.previousPixels !== 'undefined') {
-        if(compareImages(this.previousPixels, this.capture.pixels, 4, w)) {
+        if(compareImages(this.previousPixels, this.currentPixels, 4, w)) {
           return;
         } else {
           this.rateTimer.tick();
           this.cbNewFrame(this);
         }
       }
-      this.previousPixels = copyImage(this.capture.pixels, this.previousPixels);
+      this.previousPixels = copyImage(this.currentPixels, this.previousPixels);
     }
   }
 }

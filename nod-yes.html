@@ -29,7 +29,7 @@ var w = 640, h = 480;
 
 function newFrame(cam) {
   image(cam.capture, 0, 0);
-  var detected = detector.update(cam.previousPixels, cam.capture.pixels, cam.width, cam.height);
+  var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
   if(detected) {
     console.log('nod');
   }
