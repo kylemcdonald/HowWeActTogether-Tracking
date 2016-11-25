@@ -18,7 +18,7 @@ class Camera {
       video: {
         width: {exact: width }
         // , height: { exact: height }
-        , frameRate: { min: 5, max: 15 }
+        // , frameRate: { min: 5, max: 15 }
       },
       audio: false
     };
