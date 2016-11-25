@@ -52,6 +52,8 @@ function draw() {
   var status = hys.update(detector.getStatus());
   var opacity = status ? 1 : .1;
   select('#act').style('opacity', opacity);
+
+  rect(0, 0, hys.curValueContinuous * width, 10);
 }
 </script>
 </body>

@@ -1,9 +1,10 @@
 function Hysteresis(risingDelay, fallingDelay) {
   this.risingDelay = 0; // setDelay called at bottom
   this.fallingDelay = 0;
-  this.lastTime = 0;
-  this.lastValue = false;
   this.curValue = false;
+
+  this.lastTrueTime = 0;
+  this.lastFalseTime = 0;
 
   this.onBegin = function() { }
   this.onEnd = function() { }
@@ -21,30 +22,27 @@ function Hysteresis(risingDelay, fallingDelay) {
 
   this.update = function(value) {
     var curTime = performance.now();
-    if (value != this.curValue) {
-      if (value != this.lastValue) {
-        this.lastTime = curTime;
+    
+    if (value) {
+      this.lastTrueTime = curTime;
+    } else {
+      this.lastFalseTime = curTime;
+    }
+
+    var timeSinceDiff = curTime - (value ? this.lastFalseTime : this.lastTrueTime);
+    if (value) {
+      if(timeSinceDiff > this.risingDelay && this.curValue == false) {
+        this.curValue = true;
+        this.onBegin();
       }
-      var delay = value ? this.risingDelay : this.fallingDelay;
-      if (curTime > delay + this.lastTime) {
-        if(this.curValue != value) {
-          if (value) {
-            this.onBegin();
-          } else {
-            this.onEnd();
-          }
-        }
-        this.curValue = value;
+    } else {
+      if(timeSinceDiff > this.fallingDelay && this.curValue == true) {
+        this.curValue = false;
+        this.onEnd();
       }
     }
-    this.lastValue = value;
-    return this.curValue;
-  };
+    // console.log(this.curValueContinuous);
 
-  this.set = function(value) {
-    this.curValue = value;
-    this.lastValue = value;
-    this.lastTime = performance.now();
     return this.curValue;
   };
 
