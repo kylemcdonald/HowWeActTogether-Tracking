@@ -16,31 +16,20 @@
   <style>*{font-family: sans-serif;}</style>
 </head>
 <body>
-<!-- <p>Camera <span id="cameraFrameRate">0</span> fps</p>
-<p>App <span id="appFrameRate">0</span> fps</p> -->
 <script>
 
 class GreetDetector {
-  // thresholds on the standard deviation of the binned motion.
-  // if motion is uniform in all directions and speeds (low standard deviation)
-  // then it counts as a greeting. this threshold is in seconds.
-  // if the threshold is increased (.12, .13, .14...) then the detector is more liberal.
-  // if it's decreased (.10, .09, .08...) then it's more conservative.
+  // Thresholds on the standard deviation of the binned motion.
+  // If motion is uniform in all directions and speeds (low standard deviation),
+  // then it counts as a greeting. The threshold is in seconds.
+  // If the threshold is increased (.12, .13, .14...) then the detector is more liberal.
+  // If it's decreased (.10, .09, .08...) then it's more conservative.
   constructor(waveThreshold = 0.11) {
     this.waveThreshold = waveThreshold;
     this.step = 4;
     this.bins = 7;
     this.lastMotion = new Float32Array(this.bins * this.bins);
     this.flow = new FlowCalculator(this.step);
-    this.lastDetectedTime = undefined;
-  }
-
-  getTimeSinceDetection() {
-    if(!this.lastDetectedTime) {
-      return undefined;
-    }
-    var curTime = window.performance.now() / 1000;
-    return curTime - this.lastDetectedTime;
   }
 
   update(curPixels, previousPixels, w, h) {
@@ -74,11 +63,7 @@ class GreetDetector {
     sumSqDiff /= this.lastMotion.length;
     sumSqDiff = Math.pow(sumSqDiff, .5);
 
-    var isGreet = sumSqDiff < this.waveThreshold;
-    if(isGreet) {
-      this.lastDetectedTime = curTime;
-    }
-    return isGreet;
+    return sumSqDiff < this.waveThreshold;
   }
 }
 
