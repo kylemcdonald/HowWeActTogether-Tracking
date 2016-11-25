@@ -22,110 +22,110 @@ p{font-size: 2em; margin: .5em 1em; color: "lightgray";}
 <div id="interactive"></div>
 <script>
 var interactiveSketch = function (targetAct) {
-	return function(p) {
-		var u = new utils(p);
+  return function(p) {
+    var u = new utils(p);
 
-		var capture;
-		var tracker;
+    var capture;
+    var tracker;
 
-		var w = 640, h = 480;
-		var drawCamera = true;
+    var w = 640, h = 480;
+    var drawCamera = true;
 
-		var prevPositions = [];
-		var zeros = [];
+    var prevPositions = [];
+    var zeros = [];
 
-		var hys = {
-	    	smiling: new Hysteresis(1),
-	    	screaming: new Hysteresis(1),
-	    	mouthOpen: new Hysteresis(1)
-		}
+    var hys = {
+        smiling: new Hysteresis(1),
+        screaming: new Hysteresis(1),
+        mouthOpen: new Hysteresis(1)
+    }
 
-		// function clmtrackrIteration() {
-		//   // console.log('clmtrackrIteration');
-		// }
-		// function clmtrackrLost() {
-		//   console.log('clmtrackrLost');
-		// }
-		// function clmtrackrNotFound() {
-		//   console.log('clmtrackrNotFound');
-		// }
-		// function clmtrackrConverged() {
-		//   console.log('clmtrackrConverged');
-		// }
+    // function clmtrackrIteration() {
+    //   // console.log('clmtrackrIteration');
+    // }
+    // function clmtrackrLost() {
+    //   console.log('clmtrackrLost');
+    // }
+    // function clmtrackrNotFound() {
+    //   console.log('clmtrackrNotFound');
+    // }
+    // function clmtrackrConverged() {
+    //   console.log('clmtrackrConverged');
+    // }
 
-		p.keyPressed = function (key) {
-			if(key.key == '[') {
-				var e = new Event('actBegin');
-				document.dispatchEvent(e);
-			}
-			if(key.key == ']') {
-				var e = new Event('actEnd');
-				document.dispatchEvent(e);
-			}
-			if(key.key == 'z') {
-				resetTracker(tracker, capture);
-			}
-			if(key.key == 'x') {
-				tracker.stop();
-			}
-			if(key.key == 'c') {
-				drawCamera = !drawCamera;
-			}
-		}
+    p.keyPressed = function (key) {
+      if(key.key == '[') {
+        var e = new Event('actBegin');
+        document.dispatchEvent(e);
+      }
+      if(key.key == ']') {
+        var e = new Event('actEnd');
+        document.dispatchEvent(e);
+      }
+      if(key.key == 'z') {
+        resetTracker(tracker, capture);
+      }
+      if(key.key == 'x') {
+        tracker.stop();
+      }
+      if(key.key == 'c') {
+        drawCamera = !drawCamera;
+      }
+    }
 
-		p.setup = function () {
-			p.createCanvas(w, h);
-			capture = p.createCapture(p.VIDEO);
-			capture.size(w, h);
-			capture.hide();
-			tracker = createTracker(capture);
-		}
+    p.setup = function () {
+      p.createCanvas(w, h);
+      capture = p.createCapture(p.VIDEO);
+      capture.size(w, h);
+      capture.hide();
+      tracker = createTracker(capture);
+    }
 
-		p.draw = function () {
-			if(drawCamera) {
-				p.image(capture, 0, 0, w, h);
-			} else {
-				p.background(0);
-			}
-			var positions = tracker.getCurrentPosition();
-			var params = tracker.getCurrentParameters();
+    p.draw = function () {
+      if(drawCamera) {
+        p.image(capture, 0, 0, w, h);
+      } else {
+        p.background(0);
+      }
+      var positions = tracker.getCurrentPosition();
+      var params = tracker.getCurrentParameters();
 
-			if(positions.length > 0) {
-				var description = u.buildDescription(positions, params);
-				u.drawFace(positions, description);
-				// u.drawParameters(params);
+      if(positions.length > 0) {
+        var description = u.buildDescription(positions, params);
+        u.drawFace(positions, description);
+        // u.drawParameters(params);
 
-				hys.smiling.update(description.smiling);
-				hys.screaming.update(description.screaming);
-				hys.mouthOpen.update(description.mouthOpen);
+        hys.smiling.update(description.smiling);
+        hys.screaming.update(description.screaming);
+        hys.mouthOpen.update(description.mouthOpen);
 
-				p.select('#smiling').style('color', hys.smiling.curValue ? 'black' : 'lightgray');
-				p.select('#screaming').style('color', hys.screaming.curValue ? 'black' : 'lightgray');
-				p.select('#mouthOpen').style('color', hys.mouthOpen.curValue ? 'black' : 'lightgray');
+        p.select('#smiling').style('color', hys.smiling.curValue ? 'black' : 'lightgray');
+        p.select('#screaming').style('color', hys.screaming.curValue ? 'black' : 'lightgray');
+        p.select('#mouthOpen').style('color', hys.mouthOpen.curValue ? 'black' : 'lightgray');
 
-				if(zeros.length) {
-					var modifiedParameters = params.slice();
-					zeros.forEach(function (i) {
-						modifiedParameters[i] = 0;
-					})
-					var modifiedPositions = tracker.calculatePositions(modifiedParameters);
-					u.drawFace(modifiedPositions, u.buildDescription(modifiedPositions));    
-				}
+        if(zeros.length) {
+          var modifiedParameters = params.slice();
+          zeros.forEach(function (i) {
+            modifiedParameters[i] = 0;
+          })
+          var modifiedPositions = tracker.calculatePositions(modifiedParameters);
+          u.drawFace(modifiedPositions, u.buildDescription(modifiedPositions));    
+        }
 
-				if(prevPositions.length > 0) {
-					var dxy = subtractList(positions, prevPositions);
-				}
-				prevPositions = positions.slice();
-			}
-		}
-	}
+        if(prevPositions.length > 0) {
+          var dxy = subtractList(positions, prevPositions);
+        }
+        prevPositions = positions.slice();
+      }
+    }
+  }
 }
 
 document.addEventListener('actBegin', function () {
-	console.log('actBegin');
+  console.log('actBegin');
 });
 document.addEventListener('actEnd', function () {
-	console.log('actEnd');
+  console.log('actEnd');
 });
 
 var interactivep5 = new p5(interactiveSketch('nod-yes'), 'interactive');

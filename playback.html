@@ -22,29 +22,29 @@
 <script>
 var referenceTracker = createTracker();
 var dataAnimation = function(filename) {
-	return function(p) {
-		var u = new utils(p);
-		var w = 640, h = 480;
-		var frameNumber = 0;
-		var recording = [];
+  return function(p) {
+    var u = new utils(p);
+    var w = 640, h = 480;
+    var frameNumber = 0;
+    var recording = [];
 
-		p.setup = function () {
-			p.createCanvas(w, h);
-			p.loadJSON(filename, function(data) {
-				recording = data;
-			});
-		}
+    p.setup = function () {
+      p.createCanvas(w, h);
+      p.loadJSON(filename, function(data) {
+        recording = data;
+      });
+    }
 
-		p.draw = function () {
-			p.clear();
-			if(recording.length > 0) {
-				var params = recording[frameNumber % recording.length];
-				var positions = referenceTracker.calculatePositions(params);
-				u.drawFace(positions, u.buildDescription(positions));
-				frameNumber++;
-			}
-		}
-	}
+    p.draw = function () {
+      p.clear();
+      if(recording.length > 0) {
+        var params = recording[frameNumber % recording.length];
+        var positions = referenceTracker.calculatePositions(params);
+        u.drawFace(positions, u.buildDescription(positions));
+        frameNumber++;
+      }
+    }
+  }
 }
 
 new p5(dataAnimation('data/nod-yes.json'), 'data-nod-yes');
