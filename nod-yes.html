@@ -7,154 +7,51 @@
   <script src="js/local/lodash.js"></script>
   <script src="js/local/dat.gui.min.js"></script>
 
-  <script src="js/flow.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/ratetimer.js"></script>
+  <script src="js/flow.js"></script>
+  <script src="js/detector.js"></script>
+  <script src="js/noddetector.js"></script>
+  <script src="js/camera.js"></script>
   <script src="js/hysteresis.js"></script>
   <script src="js/graph.js"></script>
 
   <style>*{font-family: sans-serif;}</style>
 </head>
 <body>
-<!-- <p>Camera <span id="cameraFrameRate">0</span> fps</p>
-<p>App <span id="appFrameRate">0</span> fps</p> -->
+<h1 style='opacity:0.1' id='act'>Nod Yes</h1>
 <script>
-var u = new utils();
+var cam;
+var detector;
+var hys;
 
-class NodDetector {
-  constructor(minDuration = 0.3, maxDuration = 1, agreement = 0.5, minMotion = 2) {
-    this.minDuration = minDuration;
-    this.maxDuration = maxDuration;
-    this.agreement = agreement;
-    this.minMotion = minMotion;
+var w = 640, h = 480;
 
-    this.lastChangeTime = undefined;
-    this.previousMotion = undefined;
-    this.lastDuration = undefined;
-    this.totalMotion = 0;
-    this.lastNodTime = undefined;
-  }
-  getTimeSinceNod() {
-    if(!this.lastNodTime) {
-      return undefined;
-    }
-    var curTime = window.performance.now() / 1000;
-    return curTime - this.lastNodTime;
-  }
-  addMotion(motion) {
-    var isNod = false;
-    this.totalMotion += Math.abs(motion);
-    if(this.previousMotion) {
-      var wasUp = this.previousMotion > 0;
-      var nowDown = motion < 0;
-      if(wasUp && nowDown) { // falling zero cross
-        var curTime = window.performance.now() / 1000;
-        if(this.lastChangeTime) {
-          var curDuration = curTime - this.lastChangeTime;
-          if(this.lastDuration && /* there is a duration to compare */
-            curDuration > this.minDuration && /* not too fast */
-            curDuration < this.maxDuration) { /* not too slow */
-            var durationDifference = Math.abs(curDuration - this.lastDuration);
-            var durationAverage = (curDuration + this.lastDuration) / 2;
-            if(durationDifference < durationAverage * this.agreement) {
-              var averageMotion = this.totalMotion / curDuration;
-              if(averageMotion > this.minMotion) {
-                this.lastNodTime = curTime;
-                isNod = true;
-                // console.log('good nod ' + averageMotion);
-              } else {
-                // console.log('nod is too weak');
-              }
-            } else {
-              // console.log('nod is too dissimilar in duration to last nod');
-            }
-          } else {
-            // console.log('nod is too fast or too slow');
-          }
-          // reset
-          this.lastDuration = curDuration;
-          this.totalMotion = 0;
-        }
-        this.lastChangeTime = curTime;
-      }
-    }
-    this.previousMotion = motion;
-    return isNod;
+function newFrame(cam) {
+  image(cam.capture, 0, 0);
+  var detected = detector.update(cam.previousPixels, cam.capture.pixels, cam.width, cam.height);
+  if(detected) {
+    console.log('nod');
   }
 }
-
-var capture;
-var previousPixels;
-var flow;
-var w = 640, h = 480;
-var step = 8;
-
-var vMotionGraph;
-
-var cameraTimer = new RateTimer();
-var appTimer = new RateTimer();
-
-var detector = new NodDetector();
 
 function setup() {
   createCanvas(w, h);
-  capture = createCapture(VIDEO);
-  capture.hide();
-  flow = new FlowCalculator(step);
-  vMotionGraph = new Graph(100, -step/2, +step/2);
+  detector = new NodDetector();
+  cam = new Camera(w, h, newFrame);
+  hys = new Hysteresis(1);
+  hys.onBegin = function () {
+    console.log('begin');
+  }
+  hys.onEnd = function () {
+    console.log('end');
+  }
 }
 
 function draw() {
-  appTimer.tick();
-
-  capture.loadPixels();
-  if(capture.pixels.length > 0) {
-    if(previousPixels) {
-
-      // cheap way to ignore duplicate frames
-      if(u.same(previousPixels, capture.pixels, 4, width)) {
-        return;
-      }
-      cameraTimer.tick();
-
-      flow.calculate(previousPixels, capture.pixels, capture.width, capture.height);
-    }
-    previousPixels = u.copyImage(capture.pixels, previousPixels);
-    image(capture, 0, 0, w, h);
-
-    var isNod = false;
-    if(flow.flow) {
-      vMotionGraph.addSample(flow.flow.v);
-
-      isNod = detector.addMotion(flow.flow.v);
-      if(isNod) {
-        console.log('nod');
-      }
-
-      // strokeWeight(2);
-      // flow.flow.zones.forEach((zone) => {
-      //   stroke(map(zone.u, -step, +step, 0, 255), map(zone.v, -step, +step, 0, 255), 128);
-      //   line(zone.x, zone.y, zone.x + zone.u, zone.y + zone.v);
-      // })
-    }
-
-    noFill();
-    stroke(255);
-    vMotionGraph.draw(width, height);
-    line(0, height / 2, width, height / 2);
-
-    var timeSinceNod = detector.getTimeSinceNod();
-    if(timeSinceNod) {
-      var radius = 100 / Math.max(1, timeSinceNod);
-      if(isNod) {
-        radius += 5;;
-      }
-      ellipse(width / 2, height / 2, radius);
-    }
-  }
-
-  // select('#appFrameRate').elt.innerText = int(appTimer.getFrameRate());
-  // select('#cameraFrameRate').elt.innerText = int(cameraTimer.getFrameRate());
+  var status = hys.update(detector.getStatus());
+  var opacity = status ? 1 : .1;
+  select('#act').style('opacity', opacity);
 }
 </script>
 </body>

@@ -1,3 +1,12 @@
+// These utilities come in two parts.
+// First, there are global functions that don't neew a p5 context or config.
+// For others, say: var u = new utils(p); where p is a p5 context,
+// and then the utils will use that context to draw.
+
+function getTime() {
+  return performance.now() / 1000;
+}
+
 function createTracker(capture) {
   var tracker = new clm.tracker({
     searchWindow: 11,
@@ -12,6 +21,106 @@ function createTracker(capture) {
   // document.addEventListener('clmtrackrNotFound', clmtrackrNotFound);
   // document.addEventListener('clmtrackrConverged', clmtrackrConverged);
   return tracker;
+};
+
+function formatRecording(recording) {
+  var precision = 4;
+  return '[' + recording.map(function (frame) {
+    return '[' + frame.map(function (param) {
+      return param.toPrecision(precision);
+    }).join(',') + ']';
+  }).join(',') + ']';
+};
+
+function resetTracker(tracker, capture) {
+  tracker.stop();
+  tracker.reset();
+  tracker.start(capture.elt);
+};
+
+// copy an array, creating a new array if necessary
+// usage: dst = copyImage(src, dst)
+// based on http://jsperf.com/new-array-vs-splice-vs-slice/113
+function copyImage(src, dst) {
+  var n = src.length;
+  if(!dst || dst.length != n) {
+    dst = new src.constructor(n);
+  }
+  while(n--) {
+    dst[n] = src[n];
+  }
+  return dst;
+}
+
+function compareImages(a1, a2, stride, n) {
+  for(var i = 0; i < n; i+=stride) {
+    if(a1[i] != a2[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function average(vertices, indices) {
+  var center = [0., 0.];
+  var n;
+  if(Array.isArray(indices)) {
+    indices.forEach(function (i) {
+      center[0] += vertices[i][0];
+      center[1] += vertices[i][1];
+    })
+    n = indices.length;
+  } else {
+    vertices.forEach(function(vertex) {
+      center[0] += vertex[0];
+      center[1] += vertex[1];
+    })
+    n = vertices.length;
+  }
+  center[0] /= n;
+  center[1] /= n;
+  return center;
+};
+
+function getVertex(vertices, i) {
+  return Array.isArray(i) ? average(vertices, i) : vertices[i];
+};
+
+function vectorLength(v) {
+  return Math.sqrt(v[0] * v[0] + v[1] * v[1]);
+};
+
+function subtract (a, b) {
+  var dx = b[0] - a[0];
+  var dy = b[1] - a[1];
+  return [dx, dy];
+};
+
+function distance (a, b) {
+  return vectorLength(subtract(a, b));
+};
+
+function subtractList (a, b) {
+  var dx = 0;
+  var dy = 0;
+  for(var i = 0; i < a.length; i++) {
+    dx += b[i][0] - a[i][0];
+    dy += b[i][1] - a[i][1];
+  }
+  return [dx, dy];
+};
+
+function distanceList (a, b) {
+  return vectorLength(subtractList(a, b));   
+};
+
+function estimateCenter (positions) {
+  return average([positions[23], positions[28], positions[37]]);
+};
+
+// vulnerable to turning the head left/right
+function estimateScale (positions) {
+  return distance(positions[23], positions[28]);
 };
 
 var utils = function(p) {
@@ -39,45 +148,6 @@ var utils = function(p) {
   // gui.add(config, 'screamingThreshold', 0, 1);
   // gui.add(config, 'shakeMaxThreshold', 0, 5.0);
 
-
-  // copy an array, creating a new array if necessary
-  // usage: dst = copyImage(src, dst)
-  // based on http://jsperf.com/new-array-vs-splice-vs-slice/113
-  module.copyImage = function (src, dst) {
-    var n = src.length;
-    if(!dst || dst.length != n) {
-    dst = new src.constructor(n);
-    }
-    while(n--) {
-    dst[n] = src[n];
-    }
-    return dst;
-  }
-
-  module.same = function(a1, a2, stride, n) {
-    for(var i = 0; i < n; i+=stride) {
-      if(a1[i] != a2[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  module.formatRecording = function (recording) {
-    var precision = 4;
-    return '[' + recording.map(function (frame) {
-      return '[' + frame.map(function (param) {
-        return param.toPrecision(precision);
-      }).join(',') + ']';
-    }).join(',') + ']';
-  };
-
-  module.resetTracker = function (tracker, capture) {
-    tracker.stop();
-    tracker.reset();
-    tracker.start(capture.elt);
-  };
-
   module.drawParameters = function (params) {
     p.push();
     p.strokeWeight(1);
@@ -89,14 +159,10 @@ var utils = function(p) {
     p.pop();
   };
 
-  module.getVertex = function (vertices, i) {
-    return Array.isArray(i) ? module.average(vertices, i) : vertices[i];
-  };
-
   module.drawCurve = function (vertices, indices) {
     p.beginShape();
     indices.forEach(function(i) {
-      var cur = module.getVertex(vertices, i);
+      var cur = getVertex(vertices, i);
       p.curveVertex(cur[0], cur[1]);
     });
     p.endShape();
@@ -105,82 +171,35 @@ var utils = function(p) {
   module.drawPolyline = function (vertices, indices) {
     p.beginShape();
     indices.forEach(function(i) {
-      var cur = module.getVertex(vertices, i);
+      var cur = getVertex(vertices, i);
       p.vertex(cur[0], cur[1]);
     });
     p.endShape();
   };
 
-  module.average = function (vertices, indices) {
-    var center = [0., 0.];
-    var n;
-    if(Array.isArray(indices)) {
-      indices.forEach(function (i) {
-        center[0] += vertices[i][0];
-        center[1] += vertices[i][1];
-      })
-      n = indices.length;
-    } else {
-      vertices.forEach(function(vertex) {
-        center[0] += vertex[0];
-        center[1] += vertex[1];
-      })
-      n = vertices.length;
+  module.drawClippingPath = function (ctx, positions, indices) {
+    ctx.beginPath();
+    ctx.moveTo(positions[indices[0]][0], positions[indices[0]][1]);
+    for(var i = 1; i < indices.length; i++) {
+      var index = indices[i];
+      ctx.lineTo(positions[index][0], positions[index][1]);
     }
-    center[0] /= n;
-    center[1] /= n;
-    return center;
-  };
-
-  module.vectorLength = function(v) {
-    return Math.sqrt(v[0] * v[0] + v[1] * v[1]);
-  };
-
-  module.subtract = function (a, b) {
-    var dx = b[0] - a[0];
-    var dy = b[1] - a[1];
-    return [dx, dy];
-  };
-
-  module.distance = function (a, b) {
-    return module.vectorLength(module.subtract(a, b));
-  };
-
-  module.subtractList = function (a, b) {
-    var dx = 0;
-    var dy = 0;
-    for(var i = 0; i < a.length; i++) {
-      dx += b[i][0] - a[i][0];
-      dy += b[i][1] - a[i][1];
-    }
-    return [dx, dy];
-  };
-
-  module.distanceList = function (a, b) {
-    return module.vectorLength(module.subtractList(a, b));   
-  };
-
-  module.estimateCenter = function (positions) {
-    return module.average([positions[23], positions[28], positions[37]]);
-  };
-
-  // vulnerable to turning the head left/right
-  module.estimateScale = function (positions) {
-    return module.distance(positions[23], positions[28]);
+    ctx.closePath();
+    ctx.clip();
   };
 
   module.buildDescription = function (positions, params) {
     console.log(params[0], params[1])
 
 
-    var faceCenter = module.estimateCenter(positions);
-    var faceScale = module.estimateScale(positions);
+    var faceCenter = estimateCenter(positions);
+    var faceScale = estimateScale(positions);
 
-    var mouthCenter = module.average([positions[60], positions[57]]);
-    var mouthLR = module.distance(positions[44], positions[50]);
-    var mouthUD = module.distance(positions[60], positions[57]);
+    var mouthCenter = average([positions[60], positions[57]]);
+    var mouthLR = distance(positions[44], positions[50]);
+    var mouthUD = distance(positions[60], positions[57]);
     var mouthOpenness = mouthUD / mouthLR;
-    var smileness = module.distance(positions[44], positions[50]) / faceScale;
+    var smileness = distance(positions[44], positions[50]) / faceScale;
 
     // var scale = params[0];
     // var zrotation = params[1];
@@ -196,17 +215,6 @@ var utils = function(p) {
     description.mouthOpen.update(mouthOpenness > config.mouthOpennessThreshold);
 
     return description;
-  };
-
-  module.drawClippingPath = function (ctx, positions, indices) {
-    ctx.beginPath();
-    ctx.moveTo(positions[indices[0]][0], positions[indices[0]][1]);
-    for(var i = 1; i < indices.length; i++) {
-      var index = indices[i];
-      ctx.lineTo(positions[index][0], positions[index][1]);
-    }
-    ctx.closePath();
-    ctx.clip();
   };
 
   module.drawFace = function(positions, description) {
