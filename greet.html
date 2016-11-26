@@ -49,6 +49,8 @@ var sketch = function(p) {
   }
 
   p.draw = function() {
+    p.image(cam.capture, 0, 0);
+    
     var status = hys.update(detector.getStatus());
     var opacity = status ? 1 : .1;
     p.select('#act').style('opacity', opacity);
@@ -61,17 +63,17 @@ var sketch = function(p) {
       } else {
         p.strokeWeight(2);
       }
-      utils.drawFace(positions, description);
+      // utils.drawFace(positions, description);
       if (status) {
         p.noStroke();
         p.fill(0, 50);
-        p.ellipse(detector.position[0]+p.random(-10, 10), detector.position[1]+p.random(-10, 10), 100, 100);
+        // p.ellipse(detector.position[0]+p.random(-10, 10), detector.position[1]+p.random(-10, 10), 100, 100);
+        p.ellipse(detector.position[0], detector.position[1], 100, 100);
       }
     }
   }
 
   function newFrame(cam) {
-    p.image(cam.capture, 0, 0);
     var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
     if(detected) {
       console.log('greet');

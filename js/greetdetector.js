@@ -7,7 +7,7 @@
 */
 
 class GreetDetector extends Detector {
-  constructor(waveThreshold = 0.04) {
+  constructor(waveThreshold = 0.10) {
     super();
 
     this.frameCount = 0;
@@ -25,22 +25,28 @@ class GreetDetector extends Detector {
     this.flow.calculateRgba(previousPixels, curPixels, w, h);
     var maxSide = (this.step * 2 + 1);
     var multiplier = this.bins / (2 * maxSide);
-    var weightedAverageX = 0;
-    var weightedAverageY = 0;
-    var weightTotal = 0;
-    this.flow.flow.zones.forEach((zone) => {
-      var weight = zone.u * zone.u + zone.v * zone.v;
-      weightedAverageX += weight * zone.x;
-      weightedAverageY += weight * zone.y;
-      weightTotal += weight;
+    var lengthTotal = 0;
+    var zones = this.flow.flow.zones;
+    var averageX = 0;
+    var averageY = 0;
+    var total = 0;
+    zones.forEach((zone) => {
+      var lengthSquared = zone.u * zone.u + zone.v * zone.v;
+      if(lengthSquared > this.step) {
+        averageX += lengthSquared * zone.x;
+        averageY += lengthSquared * zone.y;
+        total += lengthSquared;
+      }
+
       var x = Math.floor(multiplier * (maxSide + zone.u));
       var y = Math.floor(multiplier * (maxSide + zone.v));
       var i = y * this.bins + x;
       this.lastMotion[i] = curTime;
     })
+
     this.position = [
-      weightedAverageX / weightTotal,
-      weightedAverageY / weightTotal
+      averageX / total,
+      averageY / total
     ];
 
     var averageDiff = 0;
