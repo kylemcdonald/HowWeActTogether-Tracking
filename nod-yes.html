@@ -6,6 +6,8 @@
   <script src="js/local/p5.dom.js"></script>
   <script src="js/local/lodash.js"></script>
   <script src="js/local/dat.gui.min.js"></script>
+  <script src="js/local/clmtrackr.js"></script>
+  <script src="js/model_pca_20_svm.js"></script>
 
   <script src="js/utils.js"></script>
   <script src="js/ratetimer.js"></script>
@@ -22,37 +24,54 @@
 <h1 style='opacity:0.1' id='act'>Nod Yes</h1>
 <script>
 var cam;
+var tracker;
 var detector;
 var hys;
+var uts;
 
 var w = 640, h = 480;
 
-function newFrame(cam) {
-  image(cam.capture, 0, 0);
-  var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
-  if(detected) {
-    console.log('nod');
+
+var sketch = function(p) {
+  p.setup = function() {
+    p.createCanvas(w, h);
+    detector = new NodDetector();
+    uts = new utils(p);
+    cam = new Camera(p, w, h, newFrame);
+    tracker = createTracker(cam.capture);
+    hys = new Hysteresis(1, 0);
+    hys.onBegin = function () {
+      console.log('begin');
+    }
+    hys.onEnd = function () {
+      console.log('end');
+    }
   }
+
+  p.draw = function() {
+    var status = hys.update(detector.getStatus());
+    var opacity = status ? 1 : .1;
+    p.select('#act').style('opacity', opacity);
+
+
+    var positions = tracker.getCurrentPosition();
+    if(positions.length > 0) {
+      var description = uts.buildDescription(positions);
+      uts.drawFace(positions, description);
+    }
+  }
+
+  function newFrame(cam) {
+    p.image(cam.capture, 0, 0);
+    var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
+    if(detected) {
+      console.log('nod');
+    }
+  }
+
 }
 
-function setup() {
-  createCanvas(w, h);
-  detector = new NodDetector();
-  cam = new Camera(w, h, newFrame);
-  hys = new Hysteresis(1);
-  hys.onBegin = function () {
-    console.log('begin');
-  }
-  hys.onEnd = function () {
-    console.log('end');
-  }
-}
-
-function draw() {
-  var status = hys.update(detector.getStatus());
-  var opacity = status ? 1 : .1;
-  select('#act').style('opacity', opacity);
-}
+var myp5 = new p5(sketch);
 </script>
 </body>
 </html>

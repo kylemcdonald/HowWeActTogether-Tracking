@@ -6,7 +6,7 @@
 */
 
 class Camera {
-  constructor(width, height, cbNewFrame) {
+  constructor(p, width, height, cbNewFrame) {
     this.width = width;
     this.height = height;
     this.cbNewFrame = cbNewFrame;
@@ -23,7 +23,7 @@ class Camera {
       },
       audio: false
     };
-    this.capture = createCapture(constraints);
+    this.capture = p.createCapture(constraints);
     this.capture.hide();
     this.update();
   }

@@ -185,7 +185,7 @@ var utils = function(p) {
     ctx.clip();
   };
 
-  module.buildDescription = function (positions, params) {
+  module.buildDescription = function (positions) {
     // console.log(params[0], params[1])
 
     var faceCenter = estimateCenter(positions);
@@ -197,12 +197,6 @@ var utils = function(p) {
     var mouthOpenness = mouthUD / mouthLR;
     var smileness = distance(positions[44], positions[50]) / faceScale;
 
-    // var scale = params[0];
-    // var zrotation = params[1];
-    // var xposition = params[2];
-    // var yposition = params[3];
-    // var yrotation = params[4];
-    // var xrotation = params[5];
 
     description.faceCenter = faceCenter;
     description.faceScale = faceScale;
