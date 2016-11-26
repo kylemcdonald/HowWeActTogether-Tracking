@@ -7,7 +7,7 @@
 */
 
 class NodDetector extends Detector {
-  constructor(minDuration = 0.3, maxDuration = 1, agreement = 0.5, minMotion = 2) {
+  constructor(minDuration = 0.2, maxDuration = 1, agreement = 0.6, minMotion = 2) {
     super();
 
     this.minDuration = minDuration;

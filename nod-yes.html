@@ -27,7 +27,7 @@ var cam;
 var tracker;
 var detector;
 var hys;
-var uts;
+var utils;
 
 var w = 640, h = 480;
 
@@ -36,7 +36,7 @@ var sketch = function(p) {
   p.setup = function() {
     p.createCanvas(w, h);
     detector = new NodDetector();
-    uts = new utils(p);
+    utils = new Utils(p);
     cam = new Camera(p, w, h, newFrame);
     tracker = createTracker(cam.capture);
     hys = new Hysteresis(1, 0);
@@ -56,8 +56,18 @@ var sketch = function(p) {
 
     var positions = tracker.getCurrentPosition();
     if(positions.length > 0) {
-      var description = uts.buildDescription(positions);
-      uts.drawFace(positions, description);
+      var description = utils.buildDescription(positions);
+      if (status) {
+        p.strokeWeight(3);
+      } else {
+        p.strokeWeight(2);
+      }
+      utils.drawFace(positions, description);
+      if (status) {
+        p.noStroke();
+        p.fill(0, 50);
+        p.ellipse(description.faceCenter[0]+p.random(-10, 10), description.faceCenter[1]+p.random(-10, 10), 100, 100);
+      }
     }
   }
 

@@ -123,7 +123,7 @@ function estimateScale (positions) {
   return distance(positions[23], positions[28]);
 };
 
-var utils = function(p) {
+var Utils = function(p) {
 
   var module = {};
   var description = {
@@ -147,7 +147,7 @@ var utils = function(p) {
 
   module.drawParameters = function (params) {
     p.push();
-    p.strokeWeight(1);
+    //p.strokeWeight(1);
     p.translate(p.width / 2, 10);
     params.forEach(function(p) {
       p.rect(0, 0, p, 10);
@@ -212,7 +212,7 @@ var utils = function(p) {
     p.push();
     p.noFill();
     p.stroke(255);
-    p.strokeWeight(2);
+    //p.strokeWeight(2);
 
     // draws a curve with the list of indices
     // a list within the list means "use the average these indices"
