@@ -6,6 +6,8 @@
   <script src="js/local/p5.dom.js"></script>
   <script src="js/local/lodash.js"></script>
   <script src="js/local/dat.gui.min.js"></script>
+  <script src="js/local/clmtrackr.js"></script>
+  <script src="js/model_pca_20_svm.js"></script>
 
   <script src="js/utils.js"></script>
   <script src="js/ratetimer.js"></script>
@@ -22,37 +24,63 @@
 <h1 style='opacity:0.1' id='act'>Greet</h1>
 <script>
 var cam;
+var tracker;
 var detector;
 var hys;
+var utils;
 
 var w = 640, h = 480;
 
-function newFrame(cam) {
-  image(cam.capture, 0, 0);
-  var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
-  if(detected) {
-    console.log('greet');
+
+var sketch = function(p) {
+  p.setup = function() {
+    p.createCanvas(w, h);
+    detector = new GreetDetector();
+    utils = new Utils(p);
+    cam = new Camera(p, w, h, newFrame);
+    tracker = createTracker(cam.capture);
+    hys = new Hysteresis(1, 0);
+    hys.onBegin = function () {
+      console.log('begin');
+    }
+    hys.onEnd = function () {
+      console.log('end');
+    }
   }
+
+  p.draw = function() {
+    var status = hys.update(detector.getStatus());
+    var opacity = status ? 1 : .1;
+    p.select('#act').style('opacity', opacity);
+
+    var positions = tracker.getCurrentPosition();
+    if(positions.length > 0) {
+      var description = utils.buildDescription(positions);
+      if (status) {
+        p.strokeWeight(3);
+      } else {
+        p.strokeWeight(2);
+      }
+      utils.drawFace(positions, description);
+      if (status) {
+        p.noStroke();
+        p.fill(0, 50);
+        p.ellipse(detector.position[0]+p.random(-10, 10), detector.position[1]+p.random(-10, 10), 100, 100);
+      }
+    }
+  }
+
+  function newFrame(cam) {
+    p.image(cam.capture, 0, 0);
+    var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
+    if(detected) {
+      console.log('greet');
+    }
+  }
+
 }
 
-function setup() {
-  createCanvas(w, h);
-  detector = new GreetDetector();
-  cam = new Camera(w, h, newFrame);
-  hys = new Hysteresis(1);
-  hys.onBegin = function () {
-    console.log('begin');
-  }
-  hys.onEnd = function () {
-    console.log('end');
-  }
-}
-
-function draw() {
-  var status = hys.update(detector.getStatus());
-  var opacity = status ? 1 : .1;
-  select('#act').style('opacity', opacity);
-}
+var myp5 = new p5(sketch);
 </script>
 </body>
 </html>

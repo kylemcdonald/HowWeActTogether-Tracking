@@ -16,6 +16,7 @@ class GreetDetector extends Detector {
     this.bins = 7;
     this.lastMotion = new Float32Array(this.bins * this.bins);
     this.flow = new FlowCalculator(this.step);
+    this.position = undefined;
   }
 
   update(previousPixels, curPixels, w, h) {
@@ -24,12 +25,23 @@ class GreetDetector extends Detector {
     this.flow.calculateRgba(previousPixels, curPixels, w, h);
     var maxSide = (this.step * 2 + 1);
     var multiplier = this.bins / (2 * maxSide);
+    var weightedAverageX = 0;
+    var weightedAverageY = 0;
+    var weightTotal = 0;
     this.flow.flow.zones.forEach((zone) => {
+      var weight = zone.u * zone.u + zone.v * zone.v;
+      weightedAverageX += weight * zone.x;
+      weightedAverageY += weight * zone.y;
+      weightTotal += weight;
       var x = Math.floor(multiplier * (maxSide + zone.u));
       var y = Math.floor(multiplier * (maxSide + zone.v));
       var i = y * this.bins + x;
       this.lastMotion[i] = curTime;
     })
+    this.position = [
+      weightedAverageX / weightTotal,
+      weightedAverageY / weightTotal
+    ];
 
     var averageDiff = 0;
     for(var i = 0; i < this.lastMotion.length; i++) {

@@ -76,6 +76,7 @@ var interactiveSketch = function (targetAct) {
     p.setup = function () {
       p.createCanvas(w, h);
       capture = p.createCapture(p.VIDEO);
+      capture.size(w, h);
       capture.hide();
       tracker = createTracker(capture);
     }
