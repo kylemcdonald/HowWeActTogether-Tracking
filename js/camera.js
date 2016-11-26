@@ -24,6 +24,7 @@ class Camera {
       audio: false
     };
     this.capture = p.createCapture(constraints);
+    this.capture.size(width, height);
     this.capture.hide();
     this.update();
   }
