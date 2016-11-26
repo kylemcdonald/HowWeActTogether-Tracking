@@ -53,7 +53,6 @@ var sketch = function(p) {
     var opacity = status ? 1 : .1;
     p.select('#act').style('opacity', opacity);
 
-
     var positions = tracker.getCurrentPosition();
     if(positions.length > 0) {
       var description = utils.buildDescription(positions);
