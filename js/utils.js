@@ -197,7 +197,6 @@ var Utils = function(p) {
     var mouthOpenness = mouthUD / mouthLR;
     var smileness = distance(positions[44], positions[50]) / faceScale;
 
-
     description.faceCenter = faceCenter;
     description.faceScale = faceScale;
 

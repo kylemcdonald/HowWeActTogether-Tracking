@@ -4,20 +4,14 @@ Computer vision and rendering of faces for a crowdsourced durational performance
 
 ## bugs
 
-  - often initializes with a big rotation, not good.
-  - if the face is too small, just restart. or modify library to add min (and max?) face size.
+  - if the face is too small, just restart.
   - has big issues with side and beneath lighting, could we highpass or something?
-  - sometimes finds faces in black or white areas.
-  - warning: webkitCancelRequestAnimationFrame should not be called before cancelRequestAnimationFrame
+  - sometimes finds faces in evenly lit areas.
   - don't show the new face immediately, wait a moment to be sure it's good
   - it's possible for runnerBox to be undefined inside the runnerFunction loop, causing a crash (temporarily)
 
 ## general
 
-  - tell people to put their face in the center? initialize only in a small area to avoid false positives?
-  - can we detect the goodness of the fit from the reasonableness of the parameters?
-  - manual "reload" button?
-  - should be able to change the effective cpu usage by modifying the runner function
   - don't draw irises all the way to eyelids
   - use better system for getting scale and orientation
   - need to test on different resolution webcams, and different framerates
@@ -32,4 +26,21 @@ Computer vision and rendering of faces for a crowdsourced durational performance
 
 ### greet
 
-  - advanced version would do autocorrelation on low resolution images
+  - advanced version would do autocorrelation on low resolution images?
+  - or the difference image of the last two difference images (second derivative)
+
+### scream
+
+  - use audio input from p5 to detect loud noises
+  - plus mouth open
+
+### eye contact
+
+  - frame differencing, very still motion
+  - advanced version: object detect eyes, stabilize, check there is no motion in eye region
+  - also possibility: use clmtrackr to get eye position and watch for no rapid changes
+
+### nod
+
+  - motion works pretty well, could track the bounding box of face for better motion
+  - might be a better detector for watching for sine-wave shapes: e.g., fit to zero crossings, then fit to peaks and valleys, look for deviation from sine wave...
