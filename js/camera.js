@@ -15,15 +15,18 @@ class Camera {
     this.previousPixels = undefined;
     this.rateTimer = new RateTimer();
 
+    this.updateTimeout;
+
     var constraints = {
       video: {
         width: {exact: width }
         // , height: { exact: height }
         // , frameRate: { min: 5, max: 15 }
       },
-      audio: false
+      audio: true
     };
     this.capture = p.createCapture(constraints);
+    this.capture.size(this.width, this.height);
     this.capture.hide();
     this.update();
   }
@@ -31,12 +34,12 @@ class Camera {
     return this.rateTimer.getFrameRate();
   }
   update() {
-    window.requestAnimationFrame(this.update.bind(this));
+    this.updateTimeout = window.requestAnimationFrame(this.update.bind(this));
     this.capture.loadPixels();
     this.currentPixels = this.capture.pixels;
     if(this.currentPixels.length > 0) {
       if(typeof this.previousPixels !== 'undefined') {
-        if(compareImages(this.previousPixels, this.currentPixels, 4, w)) {
+        if(compareImages(this.previousPixels, this.currentPixels, 4, this.width)) {
           return;
         } else {
           this.rateTimer.tick();
@@ -45,5 +48,8 @@ class Camera {
       }
       this.previousPixels = copyImage(this.currentPixels, this.previousPixels);
     }
+  }
+  stop() {
+    window.cancelAnimationFrame(this.updateTimeout);
   }
 }

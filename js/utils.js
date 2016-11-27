@@ -209,10 +209,8 @@ var Utils = function(p) {
   };
 
   module.drawFace = function(positions, description) {
-    p.push();
     p.noFill();
-    p.stroke(255);
-    //p.strokeWeight(2);
+    p.stroke(255, 0, 0);
 
     // draws a curve with the list of indices
     // a list within the list means "use the average these indices"
@@ -242,8 +240,14 @@ var Utils = function(p) {
     module.drawClippingPath(ctx, positions, [28,67,29,68,30,69,31,70]); // right eye clipping
     p.ellipse(positions[32][0], positions[32][1], s, s); // right iris
     ctx.restore();
+  };
 
-    p.pop();
+  module.drawNoFace = function() {
+    p.noFill();
+    p.stroke(255, 0, 0);
+    p.strokeWeight(4);
+    p.line(0.3*p.width, 0.3*p.height, 0.7*p.width, 0.7*p.height);
+    p.line(0.3*p.width, 0.7*p.height, 0.7*p.width, 0.3*p.height);    
   };
 
   return module;
