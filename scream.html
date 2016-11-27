@@ -1,0 +1,106 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Greet</title>
+  <script src="js/local/p5.js"></script>
+  <script src="js/local/p5.dom.js"></script>
+  <script src="js/local/lodash.js"></script>
+  <script src="js/local/dat.gui.min.js"></script>
+  <script src="js/local/clmtrackr.js"></script>
+  <script src="js/model_pca_20_svm.js"></script>
+
+  <script src="js/utils.js"></script>
+  <script src="js/ratetimer.js"></script>
+  <script src="js/flow.js"></script>
+  <script src="js/detector.js"></script>
+  <script src="js/eyecontactdetector.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/hysteresis.js"></script>
+  <script src="js/graph.js"></script>
+
+  <style>*{font-family: sans-serif;}</style>
+</head>
+<body>
+<h1 style='opacity:0.1' id='act'>Eye Contact</h1>
+<script>
+var cam;
+var tracker;
+var detector;
+var hys;
+var utils;
+
+var w = 640, h = 480;
+
+
+var sketch = function(p) {
+  p.setup = function() {
+    p.createCanvas(w, h);
+    detector = new EyeContactDetector();
+    utils = new Utils(p);
+    cam = new Camera(p, w, h, newFrame);
+    tracker = createTracker(cam.capture);
+    hys = new Hysteresis(1, 0);
+    hys.onBegin = function () {
+      console.log('begin');
+    }
+    hys.onEnd = function () {
+      console.log('end');
+    }
+  }
+
+  p.draw = function() {
+    p.image(cam.capture, 0, 0);
+
+    // // draw the motion histogram
+    // p.stroke(255, 0, 0);
+    // p.noFill();
+    // var binWidth = 2;
+    // p.beginShape();
+    // for(var i = 0; i < detector.histogram.length; i++) {
+    //   p.vertex(i * binWidth, detector.histogram[i] / 100);
+    // }
+    // p.endShape();
+
+    // // draw the mean and median thresholds
+    // var r;
+    // p.stroke(255, 0, 0);
+    // r = detector.mean * 20;
+    // p.ellipse(p.width / 2, p.height / 2, r, r);
+    // p.stroke(0, 255, 0);
+    // r = detector.median * 20;
+    // if(detector.active) {
+    //   p.fill(0, 0, 255, 128);
+    // } else {
+    //   p.noFill();
+    // }
+    // p.ellipse(p.width / 2, p.height / 2, r, r);
+    
+    var status = hys.update(detector.getStatus());
+    var opacity = status ? 1 : .1;
+    p.select('#act').style('opacity', opacity);
+
+    var positions = tracker.getCurrentPosition();
+    if(positions.length > 0) {
+      var description = utils.buildDescription(positions);
+      if (status) {
+        p.strokeWeight(3);
+      } else {
+        p.strokeWeight(2);
+      }
+      utils.drawFace(positions, description);
+    }
+  }
+
+  function newFrame(cam) {
+    var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
+    if(detected) {
+      console.log('eye contact');
+    }
+  }
+
+}
+
+var myp5 = new p5(sketch);
+</script>
+</body>
+</html>

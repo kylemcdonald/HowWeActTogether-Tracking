@@ -1,0 +1,116 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Greet</title>
+  <script src="js/local/p5.js"></script>
+  <script src="js/local/p5.dom.js"></script>
+  <script src="js/local/lodash.js"></script>
+  <script src="js/local/dat.gui.min.js"></script>
+  <script src="js/local/clmtrackr.js"></script>
+  <script src="js/model_pca_20_svm.js"></script>
+
+  <script src="js/utils.js"></script>
+  <script src="js/ratetimer.js"></script>
+  <script src="js/flow.js"></script>
+  <script src="js/detector.js"></script>
+  <script src="js/greetdetector.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/hysteresis.js"></script>
+  <script src="js/graph.js"></script>
+
+  <style>*{font-family: sans-serif;}</style>
+</head>
+<body>
+<h1 style='opacity:0.1' id='act'>Greet</h1>
+<script>
+var cam;
+var tracker;
+var detector;
+var hys;
+var utils;
+
+var w = 640, h = 480;
+
+
+var sketch = function(p) {
+  p.setup = function() {
+    p.createCanvas(w, h);
+    detector = new GreetDetector();
+    utils = new Utils(p);
+    cam = new Camera(p, w, h, newFrame);
+    // tracker = createTracker(cam.capture);
+    hys = new Hysteresis(1);
+    hys.onBegin = function () {
+      console.log('begin');
+    }
+    hys.onEnd = function () {
+      console.log('end');
+    }
+  }
+
+  p.draw = function() {
+    p.image(cam.capture, 0, 0);
+    
+    var status = hys.update(detector.getStatus());
+    var opacity = status ? 1 : .1;
+    p.select('#act').style('opacity', opacity);
+
+    // var positions = tracker.getCurrentPosition();
+    // if(positions.length > 0) {
+    //   var description = utils.buildDescription(positions);
+    //   if (status) {
+    //     p.strokeWeight(3);
+    //   } else {
+    //     p.strokeWeight(2);
+    //   }
+    //   // utils.drawFace(positions, description);
+    //   if (status) {
+    //     p.noStroke();
+    //     p.fill(0, 50);
+    //     // p.ellipse(detector.position[0]+p.random(-10, 10), detector.position[1]+p.random(-10, 10), 100, 100);
+    //     // p.ellipse(detector.position[0], detector.position[1], 100, 100);
+    //   }
+    // }
+
+    // if(detector.timers.length > 0) {
+    //   var smallw = cam.width / detector.downsample;
+    //   var smallh = cam.height / detector.downsample;
+    //   var i = 0;
+    //   for(var y = 0; y < smallh; y++) {
+    //     for(var x = 0; x < smallw; x++) {
+    //       var curTimer = detector.timers[i];
+    //       var period = p.map(curTimer.period % 2, 0, 2, 0, 255);
+    //       var strength = p.map(curTimer.strength, 0, 128, 0, 255);
+    //       p.fill(period, strength, 255);
+
+    //       if(curTimer.valid) {
+    //         total++;
+    //         p.stroke(0,0,0);
+    //       } else {
+    //         p.noStroke();
+    //       }
+
+    //       var downsample = detector.downsample;
+    //       p.rect(x * downsample, y * downsample, downsample, downsample);
+    //       // p.ellipse(curTimer.getPeriod() * 100, curTimer.strength, 3, 3);
+
+    //       i++;
+    //     }
+    //   }
+    // }
+
+  }
+
+  function newFrame(cam) {
+    var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
+    if(detected) {
+      console.log('greet');
+    }
+  }
+
+}
+
+var myp5 = new p5(sketch);
+</script>
+</body>
+</html>

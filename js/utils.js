@@ -52,13 +52,99 @@ function copyImage(src, dst) {
   return dst;
 }
 
+// compare pixels from the middle of two images
 function compareImages(a1, a2, stride, n) {
-  for(var i = 0; i < n; i+=stride) {
+  var start = (a1.length / 2) - n;
+  for(var i = start; i < start + n; i+=stride) {
     if(a1[i] != a2[i]) {
       return false;
     }
   }
   return true;
+}
+
+// cheap, phase-shifted version
+function lowpassLerp(arr, lerpAmount, out) {
+  var n = arr.length;
+  if(typeof lerpAmount === 'undefined') {
+    lerpAmount = 0.9;
+  }
+  if(typeof out === 'undefined')  {
+    out = new arr.constructor(n);
+  }
+  var cur = arr[0];
+  for(var i = 0; i < n; i++) {
+    cur *= lerpAmount;
+    cur += arr[i] * (1 - lerpAmount);
+    out[i] = cur;
+  }
+  return out;
+}
+
+// more complicated, non-phase-shifted windowed average version
+function lowpassWindow(arr, win, out) {
+  var n = arr.length;
+  if(typeof win === 'undefined') {
+    win = 5;
+  }
+  if(typeof out === 'undefined')  {
+    out = new arr.constructor(n);
+  }
+
+  var n = arr.length;
+  if(n < (win*2+1)) {
+    console.error('array is smaller than (win*2+1)');
+    return out;
+  }
+
+  var cur = arr[0];
+  var total = 1;
+  out[0] = arr[0];
+
+  // beginning chunk
+  var j = 1;
+  for(var i = 1; i <= win; i++) {
+    cur += arr[j++];
+    cur += arr[j++];
+    total += 2;
+    out[i] = cur / total;
+  }
+
+  // middle chunk
+  for(var i = win+1; i < n-win; i++) {
+    cur += arr[i+win];
+    cur -= arr[i-win-1];
+    out[i] = cur / total;
+  }
+
+  // ending chunk
+  j = n - (2*win+1);
+  for(var i = n-win; i < n; i++) {
+    cur -= arr[j++];
+    cur -= arr[j++];
+    total -= 2;
+    out[i] = cur / total;   
+  }
+
+  return out;
+}
+
+function absSumArray(arr) {
+  var total = 0;
+  var n = arr.length;
+  for(var i = 0; i < n; i++) {
+    total += Math.abs(arr[i]);
+  }
+  return total;
+}
+
+function sumArray(arr) {
+  var total = 0;
+  var n = arr.length;
+  for(var i = 0; i < n; i++) {
+    total += arr[i];
+  }
+  return total;
 }
 
 function average(vertices, indices) {
@@ -100,6 +186,17 @@ function distance (a, b) {
   return vectorLength(subtract(a, b));
 };
 
+function subtractArrays (a, b, out) {
+  var n = a.length;
+  if(typeof out === 'undefined')  {
+    out = new Float32Array(n);
+  }
+  for(var i = 0; i < n; i++) {
+    out[i] = a[i] - b[i];
+  }
+  return out;
+}
+
 function subtractList (a, b) {
   var dx = 0;
   var dy = 0;
@@ -122,6 +219,57 @@ function estimateCenter (positions) {
 function estimateScale (positions) {
   return distance(positions[23], positions[28]);
 };
+
+function rgbaToGray(rgba, gray, w, h) {
+  var n = w * h;
+  if(!gray) {
+    gray = new Uint8ClampedArray(n);
+  }
+  var rgbaIndex = 1; // use green channel
+  for(var grayIndex = 0; grayIndex < n; grayIndex += 1) {
+    gray[grayIndex] = rgba[rgbaIndex];
+    rgbaIndex += 4;
+  }
+  return gray;
+}
+
+// downsample pix by half `levels` times
+// the final output will have size (w>>levels, h>>levels)
+// not tested on odd-(or eventually odd-) sized images
+function downsampleInplace(pix, w, h, levels) {
+  for(var k = 0; k < levels; k++) {
+    var halfw = w / 2;
+    var halfh = h / 2;
+    var i, j;
+
+    // downsample on x axis
+    i = 0;
+    j = 0;
+    for(var y = 0; y < h; y++) {
+      var j = y * w;
+      for(var x = 0; x < halfw; x++) {
+        pix[i] = (pix[j]>>1) + (pix[j+1]>>1);
+        i += 1;
+        j += 2;
+      }
+    }
+
+    // downsample on y axis
+    i = 0;
+    j = 0;
+    for(var y = 0; y < halfh; y++) {
+      var j = y * w;
+      for(var x = 0; x < halfw; x++) {
+        pix[i] = (pix[j]>>1) + (pix[j+halfw]>>1);
+        i += 1;
+        j += 1;
+      }
+    }
+
+    w /= 2;
+    h /= 2;
+  }
+}
 
 var Utils = function(p) {
 

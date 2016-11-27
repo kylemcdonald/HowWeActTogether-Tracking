@@ -1,0 +1,277 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Greet</title>
+  <script src="js/local/p5.js"></script>
+  <script src="js/local/p5.dom.js"></script>
+  <script src="js/local/lodash.js"></script>
+  <script src="js/local/dat.gui.min.js"></script>
+  <script src="js/local/clmtrackr.js"></script>
+  <script src="js/model_pca_20_svm.js"></script>
+
+  <script src="js/unused.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/ratetimer.js"></script>
+  <script src="js/flow.js"></script>
+  <script src="js/detector.js"></script>
+  <!-- // <script src="js/greetdetector.js"></script> -->
+  <script src="js/camera.js"></script>
+  <script src="js/hysteresis.js"></script>
+  <script src="js/graph.js"></script>
+
+  <style>*{font-family: sans-serif;}</style>
+</head>
+<body>
+<h1 style='opacity:0.1' id='act'>Greet</h1>
+<p>Period <span id="period"></span></p>
+<p>Neighbors <span id="neighbors"></span></p>
+<p>Activity <span id="activity"></span></p>
+<p>Total <span id="total"></span></p>
+<script>
+var cam;
+var tracker;
+var detector;
+var hys;
+var utils;
+
+var gray;
+var averageGray;
+var timers = [];
+
+class ZeroCrossDetector {
+  constructor() {
+    this.previous = undefined;
+    this.strength = 0;
+    this.timer = new RateTimer();
+    this.lastCross = undefined;
+    this.period = undefined;
+    this.valid = false;
+    this.neighbors = 0;
+    this.recent = new Graph(100, -128, +128);
+  }
+  addSample(sample) {
+    var curTime = performance.now() / 1000;
+    if(typeof this.previous !== 'undefined') {
+      if(this.previous < 0 && sample > 0) { // rising edge
+        // this.timer.tick();
+        this.period = curTime - this.lastCross;
+        this.lastCross = curTime;
+      }
+    }
+    this.previous = sample;
+    var absSample = Math.abs(sample);
+    if(absSample > this.strength) {
+      this.strength = absSample;
+    } else {
+      this.strength *= 0.9; // should be framerate based 
+    }
+
+    this.recent.addSample(sample);
+  }
+};
+
+var w = 640, h = 480;
+
+var levels = 5;
+var downsample = 1<<levels;
+
+var sketch = function(p) {
+  p.setup = function() {
+    p.createCanvas(w, h);
+    // detector = new GreetDetector();
+    utils = new Utils(p);
+    cam = new Camera(p, w, h, newFrame);
+    // tracker = createTracker(cam.capture);
+    hys = new Hysteresis(1, 0);
+    hys.onBegin = function () {
+      console.log('begin');
+    }
+    hys.onEnd = function () {
+      console.log('end');
+    }
+  }
+
+  p.draw = function() {
+    // p.image(cam.capture, 0, 0);
+    
+    // var status = hys.update(detector.getStatus());
+    var opacity = status ? 1 : .1;
+    p.select('#act').style('opacity', opacity);
+
+    // var positions = tracker.getCurrentPosition();
+    // if(positions.length > 0) {
+    //   var description = utils.buildDescription(positions);
+    //   if (status) {
+    //     p.strokeWeight(3);
+    //   } else {
+    //     p.strokeWeight(2);
+    //   }
+    //   // utils.drawFace(positions, description);
+    //   if (status) {
+    //     p.noStroke();
+    //     p.fill(0, 50);
+    //     // p.ellipse(detector.position[0]+p.random(-10, 10), detector.position[1]+p.random(-10, 10), 100, 100);
+    //     // p.ellipse(detector.position[0], detector.position[1], 100, 100);
+    //   }
+    // }
+
+    p.background(255);
+    if(gray && averageGray) {
+      p.strokeWeight(2);
+      p.colorMode(p.HSB);
+      var smallw = cam.width / downsample, smallh = cam.height / downsample;
+      var i = 0;
+      // p.fill(0);
+      var total = 0;
+      var selected;
+      for(var y = 0; y < smallh; y++) {
+        for(var x = 0; x < smallw; x++) {
+          // if(gray[i] < averageGray[i]) {
+          //   p.fill(0);
+          // } else {
+          //   p.fill(255);
+          // }
+          // p.fill(128 + (gray[i] - averageGray[i]));
+          var curTimer = timers[i];
+          var period = p.map(curTimer.period % 2, 0, 2, 0, 255);
+          var strength = p.map(curTimer.strength, 0, 128, 0, 255);
+          p.fill(period, strength, 255);
+          if(curTimer.valid) {
+            total++;
+            p.stroke(0,0,0);
+          } else {
+            p.noStroke();
+          }
+
+          if(p.mouseX > x*downsample && p.mouseX < x*downsample + downsample &&
+            p.mouseY > y*downsample && p.mouseY < y*downsample + downsample) {
+            p.stroke(0,255,255);
+            selected = timers[i];
+          }
+
+          p.rect(x * downsample, y * downsample, downsample, downsample);
+          // p.ellipse(curTimer.getPeriod() * 100, curTimer.strength, 3, 3);
+
+          i++;
+        }
+      }
+      p.select('#total').html(total);
+
+      if(selected) {
+        p.select('#period').html(selected.period);
+        p.select('#neighbors').html(selected.neighbors);
+        p.stroke(0,255,255);
+        selected.recent.draw(p, p.width, p.height);
+        p.stroke(100,255,255);
+        selected.recent.drawLowpass(p, p.width, p.height);
+        p.stroke(200,255,255);
+        selected.recent.drawHighpass(p, p.width, p.height);
+        var activity = absSumArray(selected.recent.highpass) / selected.recent.highpass.length;
+        p.select('#activity').html(activity);
+      }
+    }
+
+  }
+
+  function newFrame(cam) {
+    gray = rgbaToGray(cam.currentPixels, gray, cam.width, cam.height);
+    downsampleInplace(gray, cam.width, cam.height, levels);
+    var smallw = cam.width / downsample, smallh = cam.height / downsample;
+
+    var smalln = smallw * smallh;
+    if(typeof averageGray === 'undefined') {
+      averageGray = new Float32Array(smalln);
+      for(var i = 0; i < smalln; i++) {
+        averageGray[i] = gray[i];
+      }
+    }
+
+    if(timers.length == 0) {
+      for(var i = 0; i < smalln; i++) {
+        timers.push(new ZeroCrossDetector());
+      }
+    }
+
+    var lerpAmount = 0.95; // this should really vary with framerate
+    for(var i = 0; i < smalln; i++) {
+      timers[i].addSample(gray[i] - averageGray[i]);
+      averageGray[i] = (lerpAmount * averageGray[i]) + ((1 - lerpAmount) * gray[i]);
+    }
+    // slowDraw(p, averageGray, smallw, smallh, 1);
+
+    var minPeriod = .2, maxPeriod = .8, minStrength = 18;
+    var i = 0;
+    for(var y = 0; y < smallh; y++) {
+      for(var x = 0; x < smallw; x++) {
+        var curTimer = timers[i];
+        var curPeriod = timers[i].period;
+        // if(curPeriod > minPeriod && curPeriod < maxPeriod && curTimer.strength > minStrength) {
+        //   curTimer.valid = true;
+        // } else {
+        //   curTimer.valid = false;
+        // }
+        curTimer.neighbors = 0;
+        i++;
+      }
+    }
+
+    // check for consistency
+    var maxPeriodDiff = .1;
+    var i = 0;
+    for(var y = 0; y < smallh; y++) {
+      var hasBottom = (y + 1 < smallh);
+      for(var x = 0; x < smallw; x++) {
+        var hasRight = (x + 1 < smallw);
+
+        var curTimer = timers[i];
+        var curPeriod = curTimer.period;
+        var rightTimer, bottomTimer;
+        if(hasRight) {
+          rightTimer = timers[i+1];
+          var diff = Math.abs(rightTimer.period - curTimer.period);
+          if(diff < maxPeriodDiff) {
+            rightTimer.neighbors++;
+            curTimer.neighbors++;
+          }
+        }
+        if(hasBottom) {
+          bottomTimer = timers[i+smallw];
+          var diff = Math.abs(bottomTimer.period - curTimer.period);
+          if(diff < maxPeriodDiff) {
+            bottomTimer.neighbors++;
+            curTimer.neighbors++;
+          }
+        }
+        if(hasRight && hasBottom) {
+          bottomRightTimer = timers[i+smallw+1];
+          var diff = Math.abs(bottomRightTimer.period - curTimer.period);
+          if(diff < maxPeriodDiff) {
+            bottomRightTimer.neighbors++;
+            curTimer.neighbors++;
+          }
+        }
+
+        i++;
+      }
+    }
+
+    var minNeighbors = 3; 
+    for(var i = 0; i < smalln; i++) {
+      var curTimer = timers[i];
+      var curPeriod = curTimer.period;
+      timers[i].valid = curPeriod > minPeriod && curPeriod < maxPeriod && curTimer.strength > minStrength;
+      timers[i].valid = timers[i].valid && timers[i].neighbors > minNeighbors;
+    }
+
+    // var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
+    // if(detected) {
+    //   console.log('greet');
+    // }
+  }
+
+}
+
+var myp5 = new p5(sketch);
+</script>
+</body>
+</html>

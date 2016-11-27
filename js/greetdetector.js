@@ -1,77 +1,119 @@
 /*
-  Thresholds on the standard deviation of the binned motion.
-  If motion is uniform in all directions and speeds (low standard deviation),
-  then it counts as a greeting. The threshold is in seconds.
-  If the threshold is increased then the detector is more liberal.
-  If it's decreased then it's more conservative.
+  
 */
 
 class GreetDetector extends Detector {
-  constructor(waveThreshold = 0.10) {
+  constructor(waveThreshold = 1, minPeriod = .2, maxPeriod = .8, minStrength = 18, minNeighbors = 1) { // integer
     super();
+    this.waveThreshold = 1;
+    this.minPeriod = minPeriod;
+    this.maxPeriod = maxPeriod;
+    this.minStrength = minStrength;
+    this.minNeighbors = minNeighbors;
 
-    this.frameCount = 0;
-    this.waveThreshold = waveThreshold;
-    this.step = 4;
-    this.bins = 7;
-    this.lastMotion = new Float32Array(this.bins * this.bins);
-    this.flow = new FlowCalculator(this.step);
-    this.position = undefined;
+    this.levels = 5;
+    this.downsample = 1<<this.levels;
+    this.gray = undefined;
+    this.averageGray = undefined;
+    this.timers = [];
   }
 
   update(previousPixels, curPixels, w, h) {
     var curTime = getTime();
 
-    this.flow.calculateRgba(previousPixels, curPixels, w, h);
-    var maxSide = (this.step * 2 + 1);
-    var multiplier = this.bins / (2 * maxSide);
-    var lengthTotal = 0;
-    var zones = this.flow.flow.zones;
-    var averageX = 0;
-    var averageY = 0;
+    this.gray = rgbaToGray(curPixels, this.gray, w, h);
+    downsampleInplace(this.gray, w, h, this.levels);
+    var smallw = w / this.downsample, smallh = h / this.downsample;
+    var smalln = smallw * smallh;
+    if(typeof this.averageGray === 'undefined') {
+      this.averageGray = new Float32Array(smalln);
+      for(var i = 0; i < smalln; i++) {
+        this.averageGray[i] = this.gray[i];
+      }
+    }
+    if(this.timers.length == 0) {
+      for(var i = 0; i < smalln; i++) {
+        this.timers.push(new ZeroCrossDetector());
+      }
+    }
+    var lerpAmount = 0.95; // this should really vary with framerate
+    for(var i = 0; i < smalln; i++) {
+      this.timers[i].addSample(this.gray[i] - this.averageGray[i]);
+      this.averageGray[i] = (lerpAmount * this.averageGray[i]) + ((1 - lerpAmount) * this.gray[i]);
+    }
+
+    // threshold on period and strength
+    var i = 0;
+    for(var y = 0; y < smallh; y++) {
+      for(var x = 0; x < smallw; x++) {
+        var curTimer = this.timers[i];
+        var curPeriod = this.timers[i].period;
+        curTimer.valid = curPeriod > this.minPeriod && 
+          curPeriod < this.maxPeriod && 
+          curTimer.strength > this.minStrength;
+        curTimer.neighbors = 0; // reset neighbors
+        i++;
+      }
+    }
+
+    // add up neighbors
+    for(var y = 0; y < smallh-1; y++) {
+      for(var x = 0; x < smallw-1; x++) {
+        var i = y * smallw + x;
+        if(this.timers[i].valid) {
+          if(this.timers[i+1].valid) {
+            this.timers[i].neighbors++;
+            this.timers[i+1].neighbors++;
+          }
+          if(this.timers[i+smallw].valid) {
+            this.timers[i].neighbors++;
+            this.timers[i+smallw].neighbors++;
+          }
+        }
+      }
+    }
+
+    // threshold on neighbors
+    var minNeighbors = 2;
     var total = 0;
-    zones.forEach((zone) => {
-      var lengthSquared = zone.u * zone.u + zone.v * zone.v;
-      if(lengthSquared > this.step) {
-        averageX += lengthSquared * zone.x;
-        averageY += lengthSquared * zone.y;
-        total += lengthSquared;
-      }
-
-      var x = Math.floor(multiplier * (maxSide + zone.u));
-      var y = Math.floor(multiplier * (maxSide + zone.v));
-      var i = y * this.bins + x;
-      this.lastMotion[i] = curTime;
-    })
-
-    this.position = [
-      averageX / total,
-      averageY / total
-    ];
-
-    var averageDiff = 0;
-    for(var i = 0; i < this.lastMotion.length; i++) {
-      if(this.lastMotion[i] > 0) {
-        var curDiff = curTime - this.lastMotion[i];
-        averageDiff += curDiff;
+    for(var i = 0; i < smalln; i++) {
+      this.timers[i].valid = this.timers[i].valid && this.timers[i].neighbors > this.minNeighbors;
+      if(this.timers[i].valid) {
+        total++;
       }
     }
-    averageDiff /= this.lastMotion.length;
 
-    var sumSqDiff = 0;
-    for(var i = 0; i < this.lastMotion.length; i++) {
-      var curDiff = curTime - this.lastMotion[i];
-      curDiff *= curDiff;
-      sumSqDiff += curDiff;
-    }
-    sumSqDiff /= this.lastMotion.length;
-    sumSqDiff = Math.pow(sumSqDiff, .5);
-
-    if(this.frameCount > 10 && sumSqDiff < this.waveThreshold) {
-      // console.log(sumSqDiff);
+    if(total > this.waveThreshold) {
       super.addDetection();
+      return true;
     }
-
-    this.frameCount++;
+    return false;
   }
 }
+
+class ZeroCrossDetector {
+  constructor() {
+    this.previous = undefined;
+    this.strength = 0;
+    this.lastCross = undefined;
+    this.period = undefined;
+    this.valid = false;
+    this.neighbors = 0;
+  }
+  addSample(sample) {
+    var curTime = performance.now() / 1000;
+    if(typeof this.previous !== 'undefined') {
+      if(this.previous < 0 && sample > 0) {
+        this.period = curTime - this.lastCross;
+        this.lastCross = curTime;
+      }
+    }
+    var absSample = Math.abs(sample);
+    if(absSample > this.strength) {
+      this.strength = absSample;
+    } else {
+      this.strength *= 0.9; // should really be framerate based 
+    }
+    this.previous = sample;
+  }
+};

@@ -28,11 +28,13 @@ Computer vision and rendering of faces for a crowdsourced durational performance
 
   - advanced version would do autocorrelation on low resolution images?
   - or the difference image of the last two difference images (second derivative)
+  - remove the average motion from anything (global motion) like body moving, laptop moving...
+  - autocorrelation works for high framerates, but we really need to just look for noisiness. this could be described as: rmse of high pass signal, or recent sum of squared derivative.
 
 ### scream
 
   - use audio input from p5 to detect loud noises
-  - plus mouth open
+  - plus mouth open from clmtrackr
 
 ### eye contact
 
