@@ -68,6 +68,9 @@ var sketch = function(p) {
     
     //p.image(cam.capture, 0, 0);
     var status = hys.update(detector.getStatus());
+
+    var opacity = status ? 1 : .1;
+    p.select('#act').style('opacity', opacity);
     var positions = tracker.getCurrentPosition();
     if(positions.length > 0) {
       p.scale(s);
