@@ -38,6 +38,46 @@ var gray;
 var averageGray;
 var timers = [];
 
+class CircularQueue {
+  constructor(length) {
+    this.index = 0;
+    this.length = length;
+    this.data = new Float32Array(length);
+  }
+  push(x) {
+    this.data[this.index] = x;
+    this.index = (this.index + 1) % this.length;
+  }
+  first() {
+    return this.data[this.index];
+  }
+}
+
+// has a phase delay of (win / 2 + 1)
+class CircularLowpass {
+  constructor(win, length) {
+    this.win = win;
+    this.length = length;
+    this.recent = new CircularQueue(win);
+    this.lowpass = new CircularQueue(length);
+    this.runningSum = 0;
+  }
+  push(x) {
+    this.runningSum -= this.recent.first();
+    this.recent.push(x);
+    this.runningSum += x;
+    this.lowpass.push(this.runningSum / this.win);
+  }
+}
+
+var q = new CircularLowpass(3, 10);
+for(var i = 0; i < 20; i++) {
+  q.push(i);
+}
+console.log('adding ' + i);
+console.log(q.recent.data);
+console.log(q.lowpass.data);
+
 class ZeroCrossDetector {
   constructor() {
     this.previous = undefined;

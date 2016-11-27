@@ -23,7 +23,7 @@ class Camera {
         // , height: { exact: height }
         // , frameRate: { min: 5, max: 15 }
       },
-      audio: true
+      audio: false
     };
     this.capture = p.createCapture(constraints);
     this.capture.size(this.width, this.height);
