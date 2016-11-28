@@ -20,5 +20,6 @@ class ScreamDetector extends Detector {
 
   stop() {
     mic.stop();
+    delete this.mic;
   }
 }
