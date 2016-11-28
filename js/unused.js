@@ -18,3 +18,87 @@ function slowDraw(p, pix, w, h, channels) {
   }
   p.updatePixels();
 }
+
+function absSumArray(arr) {
+  var total = 0;
+  var n = arr.length;
+  for(var i = 0; i < n; i++) {
+    total += Math.abs(arr[i]);
+  }
+  return total;
+}
+
+function sumArray(arr) {
+  var total = 0;
+  var n = arr.length;
+  for(var i = 0; i < n; i++) {
+    total += arr[i];
+  }
+  return total;
+}
+
+// cheap, phase-shifted version
+function lowpassLerp(arr, lerpAmount, out) {
+  var n = arr.length;
+  if(typeof lerpAmount === 'undefined') {
+    lerpAmount = 0.9;
+  }
+  if(typeof out === 'undefined')  {
+    out = new arr.constructor(n);
+  }
+  var cur = arr[0];
+  for(var i = 0; i < n; i++) {
+    cur *= lerpAmount;
+    cur += arr[i] * (1 - lerpAmount);
+    out[i] = cur;
+  }
+  return out;
+}
+
+// more complicated, non-phase-shifted windowed average version
+function lowpassWindow(arr, win, out) {
+  var n = arr.length;
+  if(typeof win === 'undefined') {
+    win = 5;
+  }
+  if(typeof out === 'undefined')  {
+    out = new arr.constructor(n);
+  }
+
+  var n = arr.length;
+  if(n < (win*2+1)) {
+    console.error('array is smaller than (win*2+1)');
+    return out;
+  }
+
+  var cur = arr[0];
+  var total = 1;
+  out[0] = arr[0];
+
+  // beginning chunk
+  var j = 1;
+  for(var i = 1; i <= win; i++) {
+    cur += arr[j++];
+    cur += arr[j++];
+    total += 2;
+    out[i] = cur / total;
+  }
+
+  // middle chunk
+  for(var i = win+1; i < n-win; i++) {
+    cur += arr[i+win];
+    cur -= arr[i-win-1];
+    out[i] = cur / total;
+  }
+
+  // ending chunk
+  j = n - (2*win+1);
+  for(var i = n-win; i < n; i++) {
+    cur -= arr[j++];
+    cur -= arr[j++];
+    total -= 2;
+    out[i] = cur / total;   
+  }
+
+  return out;
+}

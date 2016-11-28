@@ -25,7 +25,7 @@
 <h1 style='opacity:0.1' id='act'>Greet</h1>
 <p>Period <span id="period"></span></p>
 <p>Neighbors <span id="neighbors"></span></p>
-<p>Activity <span id="activity"></span></p>
+<p>Activation <span id="activation"></span></p>
 <p>Total <span id="total"></span></p>
 <script>
 var cam;
@@ -41,42 +41,91 @@ var timers = [];
 class CircularQueue {
   constructor(length) {
     this.index = 0;
-    this.length = length;
     this.data = new Float32Array(length);
+    this.length = length;
+    this.halfLength = Math.floor(length / 2);
   }
   push(x) {
     this.data[this.index] = x;
     this.index = (this.index + 1) % this.length;
   }
+  reverse(i) {
+    return this.data[this.index + this.length - i];
+  }
   first() {
     return this.data[this.index];
+  }
+  middle() {
+    var middleIndex = (this.index + this.halfLength) % this.length;
+    return this.data[middleIndex];
   }
 }
 
 // has a phase delay of (win / 2 + 1)
-class CircularLowpass {
+class CircularLowpass extends CircularQueue {
   constructor(win, length) {
-    this.win = win;
-    this.length = length;
+    super(length);
     this.recent = new CircularQueue(win);
-    this.lowpass = new CircularQueue(length);
     this.runningSum = 0;
   }
   push(x) {
     this.runningSum -= this.recent.first();
     this.recent.push(x);
     this.runningSum += x;
-    this.lowpass.push(this.runningSum / this.win);
+    var cur = this.runningSum / this.recent.length;
+    super.push(cur);
+    return cur;
   }
 }
 
-var q = new CircularLowpass(3, 10);
-for(var i = 0; i < 20; i++) {
-  q.push(i);
+class CircularHighpass extends CircularQueue {
+  constructor(win, length) {
+    super(length);
+    if(win % 2 == 0) {
+      console.error('window should be odd, not ' + win);
+    }
+    this.lowpass = new CircularLowpass(win, length);
+    this.lastLowpass = undefined; // remove
+    this.lastRaw = undefined; // remove
+  }
+  push(x) {
+    var lowpass = this.lowpass.push(x);
+    var phaseShifted = this.lowpass.recent.middle();
+    var cur = phaseShifted - lowpass;
+    super.push(cur);
+    this.lastRaw = phaseShifted; // remove
+    this.lastLowpass = lowpass; // remove
+    return cur;
+  }
 }
-console.log('adding ' + i);
-console.log(q.recent.data);
-console.log(q.lowpass.data);
+
+class CircularDerivativeSum extends CircularQueue {
+  constructor(length) {
+    super(length);
+    this.previous = undefined;
+    this.sum = 0;
+    this.average = 0;
+  }
+  push(x) {
+    if(typeof this.previous !== 'undefined') {
+      this.sum -= super.first();
+      var diff = Math.abs(x - this.previous);
+      this.sum += diff;
+      this.average = this.sum / this.length;
+      super.push(diff);
+    }
+    this.previous = x;
+  }
+}
+
+// var q = new CircularHighpass(3, 10);
+// for(var i = 0; i < 20; i++) {
+//   q.push(i%2);
+// }
+// console.log(q.lowpass.recent.data);
+// console.log(q.lowpass.data);
+// console.log(q.data);
+
 
 class ZeroCrossDetector {
   constructor() {
@@ -87,7 +136,13 @@ class ZeroCrossDetector {
     this.period = undefined;
     this.valid = false;
     this.neighbors = 0;
-    this.recent = new Graph(100, -128, +128);
+    this.activationGraph = new Graph(100, 0, 128);
+    this.rawGraph = new Graph(100, -128, +128);
+    this.lowpassGraph = new Graph(100, -128, +128);
+    this.highpassGraph = new Graph(100, -128, +128);
+    this.highpass = new CircularHighpass(9, 100);
+    this.derivativeSum = new CircularDerivativeSum(30);
+    this.activation = 0;
   }
   addSample(sample) {
     var curTime = performance.now() / 1000;
@@ -106,7 +161,16 @@ class ZeroCrossDetector {
       this.strength *= 0.9; // should be framerate based 
     }
 
-    this.recent.addSample(sample);
+    var curHighpass = this.highpass.push(sample);
+    this.rawGraph.addSample(this.highpass.lastRaw);
+    this.lowpassGraph.addSample(this.highpass.lastLowpass);
+    this.highpassGraph.addSample(curHighpass);
+    // this.activation += Math.abs(curHighpass);
+    // this.activation -= Math.abs(this.highpass.first());
+    // this.activationGraph.addSample(this.activation);
+    this.derivativeSum.push(curHighpass);
+    this.activation = this.derivativeSum.average;
+    this.activationGraph.addSample(this.activation);
   }
 };
 
@@ -174,7 +238,7 @@ var sketch = function(p) {
           // p.fill(128 + (gray[i] - averageGray[i]));
           var curTimer = timers[i];
           var period = p.map(curTimer.period % 2, 0, 2, 0, 255);
-          var strength = p.map(curTimer.strength, 0, 128, 0, 255);
+          var strength = p.map(curTimer.activation, 0, 128, 0, 255);
           p.fill(period, strength, 255);
           if(curTimer.valid) {
             total++;
@@ -200,14 +264,15 @@ var sketch = function(p) {
       if(selected) {
         p.select('#period').html(selected.period);
         p.select('#neighbors').html(selected.neighbors);
+        p.stroke(128,255,255);
+        selected.rawGraph.draw(p, p.width, p.height);
+        p.stroke(64,255,255);
+        selected.lowpassGraph.draw(p, p.width, p.height);
         p.stroke(0,255,255);
-        selected.recent.draw(p, p.width, p.height);
-        p.stroke(100,255,255);
-        selected.recent.drawLowpass(p, p.width, p.height);
-        p.stroke(200,255,255);
-        selected.recent.drawHighpass(p, p.width, p.height);
-        var activity = absSumArray(selected.recent.highpass) / selected.recent.highpass.length;
-        p.select('#activity').html(activity);
+        selected.highpassGraph.draw(p, p.width, p.height);
+        p.stroke(0,255,255);
+        selected.activationGraph.draw(p, p.width, p.height);
+        p.select('#activation').html(selected.activation);
       }
     }
 
@@ -239,24 +304,16 @@ var sketch = function(p) {
     }
     // slowDraw(p, averageGray, smallw, smallh, 1);
 
-    var minPeriod = .2, maxPeriod = .8, minStrength = 18;
-    var i = 0;
-    for(var y = 0; y < smallh; y++) {
-      for(var x = 0; x < smallw; x++) {
-        var curTimer = timers[i];
-        var curPeriod = timers[i].period;
-        // if(curPeriod > minPeriod && curPeriod < maxPeriod && curTimer.strength > minStrength) {
-        //   curTimer.valid = true;
-        // } else {
-        //   curTimer.valid = false;
-        // }
-        curTimer.neighbors = 0;
-        i++;
-      }
+    // initial pass to set validity absed on activation
+    var minActivation = 10;
+    for(var i = 0; i < smalln; i++) {
+      var curTimer = timers[i];
+      var curActivation = curTimer.activation;
+      curTimer.valid = curActivation > minActivation;
+      curTimer.neighbors = 0;
     }
 
-    // check for consistency
-    var maxPeriodDiff = .1;
+    // check for 8-connected neighbors
     var i = 0;
     for(var y = 0; y < smallh; y++) {
       var hasBottom = (y + 1 < smallh);
@@ -264,28 +321,25 @@ var sketch = function(p) {
         var hasRight = (x + 1 < smallw);
 
         var curTimer = timers[i];
-        var curPeriod = curTimer.period;
+        var curValid = curTimer.valid;
         var rightTimer, bottomTimer;
         if(hasRight) {
           rightTimer = timers[i+1];
-          var diff = Math.abs(rightTimer.period - curTimer.period);
-          if(diff < maxPeriodDiff) {
+          if(curValid && rightTimer.valid) {
             rightTimer.neighbors++;
             curTimer.neighbors++;
           }
         }
         if(hasBottom) {
           bottomTimer = timers[i+smallw];
-          var diff = Math.abs(bottomTimer.period - curTimer.period);
-          if(diff < maxPeriodDiff) {
+          if(curValid && bottomTimer.valid) {
             bottomTimer.neighbors++;
             curTimer.neighbors++;
           }
         }
         if(hasRight && hasBottom) {
           bottomRightTimer = timers[i+smallw+1];
-          var diff = Math.abs(bottomRightTimer.period - curTimer.period);
-          if(diff < maxPeriodDiff) {
+          if(curValid && bottomRightTimer.valid) {
             bottomRightTimer.neighbors++;
             curTimer.neighbors++;
           }
@@ -295,12 +349,11 @@ var sketch = function(p) {
       }
     }
 
-    var minNeighbors = 3; 
+    // second pass to weed out spurious activations
+    var minNeighbors = 2; 
     for(var i = 0; i < smalln; i++) {
-      var curTimer = timers[i];
-      var curPeriod = curTimer.period;
-      timers[i].valid = curPeriod > minPeriod && curPeriod < maxPeriod && curTimer.strength > minStrength;
-      timers[i].valid = timers[i].valid && timers[i].neighbors > minNeighbors;
+      var cur = timers[i];
+      cur.valid = cur.valid && cur.neighbors > minNeighbors;
     }
 
     // var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
