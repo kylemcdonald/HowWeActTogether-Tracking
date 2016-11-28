@@ -10,11 +10,13 @@
 <script src="js/local/dat.gui.min.js"></script>
 <script src="js/model_pca_20_svm.js"></script>
 
+<script src="js/hysteresis.js"></script>
 <script src="js/utils.js"></script>
 
 <style>*{font-family: sans-serif;}</style>
 </head>
 <body style="background:gray">
+<div id="data-eyecontact"></div>
 <div id="data-nod-yes"></div>
 <div id="data-nod-no"></div>
 <div id="data-surprised"></div>
@@ -47,6 +49,7 @@ var dataAnimation = function(filename) {
   }
 }
 
+new p5(dataAnimation('data/eyecontact.json'), 'data-eyecontact');
 new p5(dataAnimation('data/nod-yes.json'), 'data-nod-yes');
 new p5(dataAnimation('data/nod-no.json'), 'data-nod-no');
 new p5(dataAnimation('data/surprised.json'), 'data-surprised');

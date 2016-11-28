@@ -182,6 +182,8 @@ var Utils = function(p) {
   var description = {
   };
 
+  var hysMouth = new Hysteresis(0.25);
+
   function Config() {
     this.mouthOpennessThreshold = 0.1;
     this.irisSize = 0.121;
@@ -257,7 +259,7 @@ var Utils = function(p) {
 
     description.smiling = (smileness > config.smileThreshold);
     description.screaming = (mouthOpenness > config.screamingThreshold);
-    description.mouthOpen = (mouthOpenness > config.mouthOpennessThreshold);
+    description.mouthOpen = hysMouth.update(mouthOpenness > config.mouthOpennessThreshold);
 
     return description;
   };

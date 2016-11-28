@@ -90,7 +90,7 @@ var interactiveSketch = function (targetAct) {
       var positions = tracker.getCurrentPosition();
       var params = tracker.getCurrentParameters();
 
-      if(positions.length > 0) {
+      if(positions) {
         var description = u.buildDescription(positions, params);
         u.drawFace(positions, description);
         // u.drawParameters(params);
