@@ -4,6 +4,7 @@
   <title>Greet</title>
   <script src="js/local/p5.js"></script>
   <script src="js/local/p5.dom.js"></script>
+  <script src="js/local/p5.sound.js"></script>
   <script src="js/local/lodash.js"></script>
   <script src="js/local/dat.gui.min.js"></script>
   <script src="js/local/clmtrackr.js"></script>
@@ -13,7 +14,7 @@
   <script src="js/ratetimer.js"></script>
   <script src="js/flow.js"></script>
   <script src="js/detector.js"></script>
-  <script src="js/eyecontactdetector.js"></script>
+  <script src="js/screamdetector.js"></script>
   <script src="js/camera.js"></script>
   <script src="js/hysteresis.js"></script>
   <script src="js/graph.js"></script>
@@ -21,9 +22,14 @@
   <style>*{font-family: sans-serif;}</style>
 </head>
 <body>
-<h1 style='opacity:0.1' id='act'>Eye Contact</h1>
+<h1 style='opacity:0.1' id='act'>Scream</h1>
+<h2>Level: <span id="level"></span></p>
 <script>
 var cam;
+var mic;
+
+var micGraph = new Graph(100, 0, 1);
+
 var tracker;
 var detector;
 var hys;
@@ -35,11 +41,11 @@ var w = 640, h = 480;
 var sketch = function(p) {
   p.setup = function() {
     p.createCanvas(w, h);
-    detector = new EyeContactDetector();
+    detector = new ScreamDetector();
     utils = new Utils(p);
-    cam = new Camera(p, w, h, newFrame);
+    cam = new Camera(p, w, h, function() {});
     tracker = createTracker(cam.capture);
-    hys = new Hysteresis(1, 0);
+    hys = new Hysteresis(0, 1);
     hys.onBegin = function () {
       console.log('begin');
     }
@@ -74,6 +80,11 @@ var sketch = function(p) {
     //   p.noFill();
     // }
     // p.ellipse(p.width / 2, p.height / 2, r, r);
+
+    var level = detector.mic.getLevel();
+    micGraph.addSample(level);
+    p.select("#level").html(level.toFixed(4));
+    micGraph.draw(p, p.width, p.height);
     
     var status = hys.update(detector.getStatus());
     var opacity = status ? 1 : .1;
@@ -82,19 +93,18 @@ var sketch = function(p) {
     var positions = tracker.getCurrentPosition();
     if(positions.length > 0) {
       var description = utils.buildDescription(positions);
+
+      var detected = detector.update(description);
+      if(detected) {
+        console.log('scream');
+      }
+
       if (status) {
         p.strokeWeight(3);
       } else {
         p.strokeWeight(2);
       }
       utils.drawFace(positions, description);
-    }
-  }
-
-  function newFrame(cam) {
-    var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
-    if(detected) {
-      console.log('eye contact');
     }
   }
 

@@ -263,6 +263,8 @@ var Utils = function(p) {
 
     description.faceCenter = faceCenter;
     description.faceScale = faceScale;
+    
+    description.mouthOpenness = mouthOpenness;
 
     description.smiling = (smileness > config.smileThreshold);
     description.screaming = (mouthOpenness > config.screamingThreshold);
