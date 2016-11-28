@@ -1,3 +1,24 @@
+function subtractArrays (a, b, out) {
+  var n = a.length;
+  if(typeof out === 'undefined')  {
+    out = new Float32Array(n);
+  }
+  for(var i = 0; i < n; i++) {
+    out[i] = a[i] - b[i];
+  }
+  return out;
+}
+
+function subtractList (a, b) {
+  var dx = 0;
+  var dy = 0;
+  for(var i = 0; i < a.length; i++) {
+    dx += b[i][0] - a[i][0];
+    dy += b[i][1] - a[i][1];
+  }
+  return [dx, dy];
+};
+
 function slowDraw(p, pix, w, h, channels) {
   p.loadPixels();
   var i = 0;
