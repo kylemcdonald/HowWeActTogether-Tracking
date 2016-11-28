@@ -9,6 +9,7 @@
   <script src="js/local/clmtrackr.js"></script>
   <script src="js/model_pca_20_svm.js"></script>
 
+  <script src="js/unused.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/ratetimer.js"></script>
   <script src="js/flow.js"></script>
@@ -31,7 +32,6 @@ var utils;
 
 var w = 640, h = 480;
 
-
 var sketch = function(p) {
   p.setup = function() {
     p.createCanvas(w, h);
@@ -39,7 +39,7 @@ var sketch = function(p) {
     utils = new Utils(p);
     cam = new Camera(p, w, h, newFrame);
     tracker = createTracker(cam.capture);
-    hys = new Hysteresis(1, 0);
+    hys = new Hysteresis(0.5); // greet detector has a lot of hysteresis already
     hys.onBegin = function () {
       console.log('begin');
     }
@@ -63,7 +63,7 @@ var sketch = function(p) {
       } else {
         p.strokeWeight(2);
       }
-      // utils.drawFace(positions, description);
+      utils.drawFace(positions, description);
       if (status) {
         p.noStroke();
         p.fill(0, 50);
