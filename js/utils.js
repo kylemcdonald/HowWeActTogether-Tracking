@@ -52,10 +52,8 @@ function copyImage(src, dst) {
   return dst;
 }
 
-// compare pixels from the middle of two images
 function compareImages(a1, a2, stride, n) {
-  var start = (a1.length / 2) - n;
-  for(var i = start; i < start + n; i+=stride) {
+  for(var i = 0; i < n; i+=stride) {
     if(a1[i] != a2[i]) {
       return false;
     }
@@ -102,17 +100,6 @@ function distance (a, b) {
   return vectorLength(subtract(a, b));
 };
 
-function subtractArrays (a, b, out) {
-  var n = a.length;
-  if(typeof out === 'undefined')  {
-    out = new Float32Array(n);
-  }
-  for(var i = 0; i < n; i++) {
-    out[i] = a[i] - b[i];
-  }
-  return out;
-}
-
 function subtractList (a, b) {
   var dx = 0;
   var dy = 0;
@@ -135,6 +122,7 @@ function estimateCenter (positions) {
 function estimateScale (positions) {
   return distance(positions[23], positions[28]);
 };
+
 
 function rgbaToGray(rgba, gray, w, h) {
   var n = w * h;
@@ -261,10 +249,9 @@ var Utils = function(p) {
     var mouthOpenness = mouthUD / mouthLR;
     var smileness = distance(positions[44], positions[50]) / faceScale;
 
+
     description.faceCenter = faceCenter;
     description.faceScale = faceScale;
-    
-    description.mouthOpenness = mouthOpenness;
 
     description.smiling = (smileness > config.smileThreshold);
     description.screaming = (mouthOpenness > config.screamingThreshold);
@@ -273,9 +260,21 @@ var Utils = function(p) {
     return description;
   };
 
-  module.drawFace = function(positions, description) {
+  module.drawFace = function(positions, description, status, action) {
+
+    if (status && action === 'scream') {
+      var r = 1.03+.04*Math.random();
+      p.push();
+      p.scale(r);
+    }
+
     p.noFill();
-    p.stroke(255, 0, 0);
+
+    if (status) {
+      p.stroke(255, 0, 0);
+    } else {
+      p.stroke(255, 180, 180);
+    }
 
     // draws a curve with the list of indices
     // a list within the list means "use the average these indices"
@@ -292,19 +291,45 @@ var Utils = function(p) {
 
     // draw left and right iris
     var s = description.faceScale * config.irisSize;
+    if (status && action === 'eyecontact') {
+      p.stroke(255, 0, 200);
+      s *= 0.3*Math.sin(p.frameCount*0.07)+0.9;
+    }
+
     var ctx = p.canvas.getContext("2d");
 
     ctx.save();
+    if (status && action === 'eyecontact') {
+      p.noFill();
+      p.stroke(255, 0, 0);
+    }
     module.drawCurve(positions, [23,23,63,24,64,25,65,26,66,23]); // left eye
     module.drawClippingPath(ctx, positions, [23,63,24,64,25,65,26,66]); // left eye clipping
+    if (status && action === 'eyecontact') {
+      p.stroke(167, 79, 255);
+      p.fill(167, 79, 255, 100);
+    }
     p.ellipse(positions[27][0], positions[27][1], s, s); // left iris
     ctx.restore();
 
     ctx.save();
+    if (status && action === 'eyecontact') {
+      p.stroke(255, 0, 0);
+      p.noFill();
+    }
     module.drawCurve(positions, [28,28,67,29,68,30,69,31,70,28]); // right eye
     module.drawClippingPath(ctx, positions, [28,67,29,68,30,69,31,70]); // right eye clipping
+    if (status && action === 'eyecontact') {
+      p.stroke(167, 79, 255);
+      p.fill(167, 79, 255, 100);
+    }
     p.ellipse(positions[32][0], positions[32][1], s, s); // right iris
     ctx.restore();
+
+
+    if (status && action === 'scream') {
+      p.pop();
+    }
   };
 
   module.drawNoFace = function() {
@@ -314,6 +339,19 @@ var Utils = function(p) {
     p.line(0.3*p.width, 0.3*p.height, 0.7*p.width, 0.7*p.height);
     p.line(0.3*p.width, 0.7*p.height, 0.7*p.width, 0.3*p.height);    
   };
+
+  module.drawGreet = function(handPos) {
+    if (handPos) {
+      p.noStroke();
+      p.fill(255, 0, 0, 100);
+      var rot = p.random(-p.PI, p.PI);
+      p.translate(handPos[0], handPos[1]);
+      p.rotate(rot);
+      p.ellipse(0, 0, 100+p.random(-25,25), 100); 
+      p.rotate(-rot);
+      p.translate(-handPos[0], -handPos[1]);
+    }
+  }
 
   return module;
 };
