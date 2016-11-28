@@ -130,8 +130,8 @@ class GreetDetector extends Detector {
 
 class GreetCell {
   // probably can get rid of highpassLength completely
-  constructor(highpassWindow = 9, highpassLength = 100, sumDuration = 30) {
-    this.highpass = new CircularHighpass(highpassWindow, highpassLength);
+  constructor(highpassWindow = 9, sumDuration = 30) {
+    this.highpass = new CircularHighpass(highpassWindow);
     this.derivativeSum = new CircularDerivativeSum(sumDuration);
     this.valid = false;
     this.neighbors = 0;
@@ -172,6 +172,9 @@ class CircularQueue {
 class CircularLowpass extends CircularQueue {
   constructor(win, length) {
     super(length);
+    if(win % 2 == 0) {
+      console.error('window should be odd, not ' + win);
+    }
     this.recent = new CircularQueue(win);
     this.runningSum = 0;
   }
@@ -185,19 +188,14 @@ class CircularLowpass extends CircularQueue {
   }
 }
 
-class CircularHighpass extends CircularQueue {
-  constructor(win, length) {
-    super(length);
-    if(win % 2 == 0) {
-      console.error('window should be odd, not ' + win);
-    }
-    this.lowpass = new CircularLowpass(win, length);
+class CircularHighpass extends CircularLowpass {
+  constructor(win) {
+    super(win);
   }
   push(x) {
-    var lowpass = this.lowpass.push(x);
-    var phaseShifted = this.lowpass.recent.middle();
+    var lowpass = super.push(x);
+    var phaseShifted = this.recent.middle();
     var cur = phaseShifted - lowpass;
-    super.push(cur);
     return cur;
   }
 }
