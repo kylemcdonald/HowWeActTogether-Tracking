@@ -53,7 +53,8 @@ function copyImage(src, dst) {
 }
 
 function compareImages(a1, a2, stride, n) {
-  for(var i = 0; i < n; i+=stride) {
+  var start = (a1.length / 2) - n;
+  for(var i = start; i < start + n; i+=stride) {
     if(a1[i] != a2[i]) {
       return false;
     }
@@ -252,6 +253,7 @@ var Utils = function(p) {
 
     description.faceCenter = faceCenter;
     description.faceScale = faceScale;
+    description.mouthOpenness = mouthOpenness;
 
     description.smiling = (smileness > config.smileThreshold);
     description.screaming = (mouthOpenness > config.screamingThreshold);
