@@ -201,21 +201,33 @@ var Utils = function(p) {
   // gui.add(config, 'screamingThreshold', 0, 1);
   // gui.add(config, 'shakeMaxThreshold', 0, 5.0);
 
-  module.drawHand = function (x, y) {
+  module.drawGreet = function(handPos) {
+    if (!handPos) {
+      return;
+    }
+
     var now = performance.now();
+
     var handSize = 0.25 * p.map(Math.sin(now / 400.), -1, +1, 0.95, 1.05);
     var waveAmount =  p.map(Math.sin(now / 500.), -1, +1, 0.7, 1.0);
     var waveRotation = Math.sin(now / 50.);
     var waveOffset = p.map(waveRotation, -1, +1, -20, +20);
-    var left = x < p.width / 2;
-    var xScale = (left ? -handSize : +handSize);
-    var yScale = handSize;
+    var left = handPos[0] < p.width / 2;
+
+    var position = [handPos[0] + waveOffset, handPos[1]];
+    var scale = [(left ? -handSize : +handSize), handSize];
+    var rotation = waveAmount * waveRotation;
+    var handCenter = [350, 480];
+
     p.push();
-    p.translate(x + waveOffset, y);
-    p.scale(xScale, yScale);
-    p.rotate(waveAmount * waveRotation);
-    p.translate(-350, -480);
+
+    p.translate(position[0], position[1]);
+    p.scale(scale[0], scale[1]);
+    p.rotate(waveRotation);
+    p.translate(-handCenter[0], -handCenter[1]);
+
     p.image(handImage, 0, 0);
+
     p.pop();
   }
 
