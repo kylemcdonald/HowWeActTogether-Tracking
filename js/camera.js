@@ -11,6 +11,7 @@ class Camera {
     this.height = height;
     this.cbNewFrame = cbNewFrame;
 
+    this.stream = undefined;
     this.currentPixels = undefined;
     this.previousPixels = undefined;
     this.rateTimer = new RateTimer();
@@ -25,7 +26,10 @@ class Camera {
       },
       audio: false
     };
-    this.capture = p.createCapture(constraints);
+    var me = this;
+    this.capture = p.createCapture(constraints, function(stream) {
+      me.stream = stream;
+    });
     this.capture.size(this.width, this.height);
     this.capture.hide();
     this.update();
@@ -43,7 +47,7 @@ class Camera {
           return;
         } else {
           this.rateTimer.tick();
-          this.cbNewFrame(this);
+          if (this.cbNewFrame) this.cbNewFrame(this);
         }
       }
       this.previousPixels = copyImage(this.currentPixels, this.previousPixels);
@@ -51,5 +55,10 @@ class Camera {
   }
   stop() {
     window.cancelAnimationFrame(this.updateTimeout);
+    if(this.stream) {
+      this.stream.getTracks().forEach(function (track) {
+        track.stop();
+      })
+    }
   }
 }
