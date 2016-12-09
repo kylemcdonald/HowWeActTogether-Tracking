@@ -13,13 +13,21 @@
 <script src="js/hysteresis.js"></script>
 <script src="js/utils.js"></script>
 
-<style>*{font-family: sans-serif;}</style>
+<style>
+body{margin:1em;}
+*{font-family: sans-serif;}
+</style>
 </head>
-<body style="background:gray">
+<body>
+<h1>Eye Contact</h1>
 <div id="data-eyecontact"></div>
+<h1>Nod Yes</h1>
 <div id="data-nod-yes"></div>
+<h1>Nod No</h1>
 <div id="data-nod-no"></div>
+<h1>Surprised</h1>
 <div id="data-surprised"></div>
+<h1>Yawn</h1>
 <div id="data-yawn"></div>
 <script>
 var referenceTracker = createTracker();
@@ -39,6 +47,7 @@ var dataAnimation = function(filename) {
 
     p.draw = function () {
       p.clear();
+      p.strokeWeight(2);
       if(recording.length > 0) {
         var params = recording[frameNumber % recording.length];
         var positions = referenceTracker.calculatePositions(params);

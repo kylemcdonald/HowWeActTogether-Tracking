@@ -3,14 +3,24 @@
 <meta charset="UTF-8">
 <script src="js/local/p5.js"></script>
 <title>How We Act Together Tracker</title>
-<style>*{font-family: sans-serif; margin: .5em;}</style>
+<style>
+body{font-family: sans-serif; margin: 1em;}
+h1,h2,p{margin: .5em}
+h2{margin-left: 1em;}
+p{margin-left: 2em;}
+</style>
 </head>
-<body style="background:gray">
+<body>
+<h1>Intro</h1>
+<p style="max-width:40em">This is the computer vision portion of the project "<a href="http://hwat.schirn.de/">How We Act Together</a>" by Lauren McCarthy and Kyle McDonald, commissioned by <a href="http://www.schirn.de">Schirn Kunsthalle Frankfurt</a>. Source is available on <a href="https://github.com/kylemcdonald/HowWeActTogether-Tracking">GitHub</a>. Important libraries used in this project include <a href="https://p5js.org">p5.js</a> and <a href="https://github.com/auduno/clmtrackr">clmtrackr</a>. The best way to examine the inner workings of this project is with the Chrome developer tools open, and placing breakpoints in code to check out the flow through the code and values of the variables. Whenever you begin and end one of the prompts, you will see the words "begin" and "end" printed to the console.</p>
 <h1>Setup</h1>
-<h2><a href="playback.html">Playback</a></h2>
 <h2><a href="tracking.html">Tracking</a></h2>
+<p>An example of tracking faces in video with clmtrackr.</p>
 <h2><a href="recording.html">Recording</a></h2>
-<h1>Acts</h1>
+<p>Used for recording performances of faces to a .json file.</p>
+<h2><a href="playback.html">Playback</a></h2>
+<p>Used for playing back pre-recorded faces from .json files.</p>
+<h1>Prompts</h1>
 <h2><a href="nod-yes.html">Nod Yes</a></h2>
 <h2><a href="eye-contact.html">Eye Contact</a></h2>
 <h2><a href="scream.html">Scream</a></h2>

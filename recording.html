@@ -15,8 +15,16 @@
 
 <style>*{font-family: sans-serif;}</style>
 </head>
-<body style="background:gray">
+<body>
 <div id="recording"></div>
+<ul>
+  <li>z: reset tracker</li>
+  <li>x: stop tracker</li>
+  <li>c: toggle drawing camera</li>
+  <li>r: (re)start or stop recording</li>
+  <li>s: save last recording to json and download</li>
+  <li>0: clear last recording</li>
+</ul>
 <script>
 var recordingSketch = function(p) {
   var u = new Utils(p);
