@@ -14,96 +14,70 @@
   <script src="js/flow.js"></script>
   <script src="js/detector.js"></script>
   <script src="js/noddetector.js"></script>
-  <script src="js/greetdetector.js"></script>
   <script src="js/camera.js"></script>
   <script src="js/hysteresis.js"></script>
+  <script src="js/graph.js"></script>
 
   <style>*{font-family: sans-serif;}</style>
 </head>
 <body>
 <h1 style='opacity:0.1' id='act'>Nod Yes</h1>
 <script>
+var cam;
+var tracker;
+var detector;
+var hys;
+var utils;
+
 var w = 640, h = 480;
 
 
 var sketch = function(p) {
-  var utils;
-  var detector;
-  var cam;
-  var tracker;
-  var hys;
-  var camW = 640;
-  var camH = 480;
-  var s = Math.min(w/camW, h/camH);
-
   p.setup = function() {
     p.createCanvas(w, h);
+    detector = new NodDetector();
     utils = new Utils(p);
-    if (name === 'nod') {
-      detector = new NodDetector();
-    } else {
-      detector = new GreetDetector();
-    }
-    // mic = new p5.AudioIn();
-    // mic.start();
-    cam = new Camera(p, camW, camH, newFrame);
+    cam = new Camera(p, w, h, newFrame);
     tracker = createTracker(cam.capture);
-
-    hys = new Hysteresis(1, 0.5);
+    hys = new Hysteresis(1, 0);
     hys.onBegin = function () {
-      //$(document).trigger('actBegin');
       console.log('begin');
     }
     hys.onEnd = function () {
-      //$(document).trigger('actEnd');
       console.log('end');
     }
   }
 
   p.draw = function() {
-    p.clear();
-    p.fill('hsla(60, 100%, 75%, .27)');
-    p.noStroke();
-    p.rect(0.18*p.width, 0.18*p.height, 0.64*p.width, 0.64*p.height);
-    
-    //p.image(cam.capture, 0, 0);
     var status = hys.update(detector.getStatus());
-
     var opacity = status ? 1 : .1;
     p.select('#act').style('opacity', opacity);
+
+
     var positions = tracker.getCurrentPosition();
     if(positions.length > 0) {
-      p.scale(s);
-      p.translate(s*(w-camW)*0.5, 0);
-      p.image(cam.capture, 0, 0);
       var description = utils.buildDescription(positions);
       if (status) {
-        p.strokeWeight(3/s);
+        p.strokeWeight(3);
       } else {
-        p.strokeWeight(2/s);
+        p.strokeWeight(2);
       }
       utils.drawFace(positions, description);
-      
-      // draw extra feedback
       if (status) {
-        if (name === 'nod') {
-
-        } else {
-          p.ellipse(description.faceCenter[0], description.faceCenter[1], 50, 50); 
-        }
+        p.noStroke();
+        p.fill(0, 50);
+        p.ellipse(description.faceCenter[0]+p.random(-10, 10), description.faceCenter[1]+p.random(-10, 10), 100, 100);
       }
-    } else {
-      utils.drawNoFace();
     }
   }
-  
+
   function newFrame(cam) {
+    p.image(cam.capture, 0, 0);
     var detected = detector.update(cam.previousPixels, cam.currentPixels, cam.width, cam.height);
     if(detected) {
       console.log('nod');
     }
   }
-
 
 }
 
