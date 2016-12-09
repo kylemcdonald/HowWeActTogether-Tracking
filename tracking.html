@@ -34,12 +34,6 @@ var interactiveSketch = function (targetAct) {
     var prevPositions = [];
     var zeros = [];
 
-    var hys = {
-        smiling: new Hysteresis(1),
-        screaming: new Hysteresis(1),
-        mouthOpen: new Hysteresis(1)
-    }
-
     // function clmtrackrIteration() {
     //   // console.log('clmtrackrIteration');
     // }
@@ -95,13 +89,8 @@ var interactiveSketch = function (targetAct) {
         u.drawFace(positions, description);
         // u.drawParameters(params);
 
-        hys.smiling.update(description.smiling);
-        hys.screaming.update(description.screaming);
-        hys.mouthOpen.update(description.mouthOpen);
-
-        p.select('#smiling').style('color', hys.smiling.curValue ? 'black' : 'lightgray');
-        p.select('#screaming').style('color', hys.screaming.curValue ? 'black' : 'lightgray');
-        p.select('#mouthOpen').style('color', hys.mouthOpen.curValue ? 'black' : 'lightgray');
+        p.select('#smiling').style('color', smiling.curValue ? 'black' : 'lightgray');
+        p.select('#mouthOpen').style('color', mouthOpen.curValue ? 'black' : 'lightgray');
 
         if(zeros.length) {
           var modifiedParameters = params.slice();
@@ -131,7 +120,6 @@ document.addEventListener('actEnd', function () {
 var interactivep5 = new p5(interactiveSketch('nod-yes'), 'interactive');
 </script>
 <p id="smiling">Smiling</p>
-<p id="screaming">Screaming</p>
 <p id="mouthOpen">Mouth open</p>
 </body>
 </html>
